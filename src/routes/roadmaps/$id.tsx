@@ -6,6 +6,7 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { FieldManager } from "@/components/fields/FieldManager";
 import { FilterBar } from "@/components/filters/FilterBar";
+import { ImportExportDialog } from "@/components/io/ImportExportDialog";
 import { LaneManager } from "@/components/lanes/LaneManager";
 import { MilestoneManager } from "@/components/milestones/MilestoneManager";
 import { ItemEditorPanel } from "@/components/panel/ItemEditorPanel";
@@ -43,6 +44,7 @@ function RoadmapEditor() {
 	const [milestonesOpen, setMilestonesOpen] = useState(false);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [shareOpen, setShareOpen] = useState(false);
+	const [ioOpen, setIoOpen] = useState(false);
 	const [filter, setFilter] = useState<ItemFilter>({
 		search: "",
 		laneId: "all",
@@ -134,6 +136,13 @@ function RoadmapEditor() {
 						</button>
 						<button
 							type="button"
+							className={toolbarBtn}
+							onClick={() => setIoOpen(true)}
+						>
+							Import/Export
+						</button>
+						<button
+							type="button"
 							onClick={() => setEditing("new")}
 							className="rounded-md bg-neutral-900 px-3 py-2 text-sm text-white"
 						>
@@ -211,6 +220,11 @@ function RoadmapEditor() {
 				roadmap={bundle.roadmap}
 				open={shareOpen}
 				onOpenChange={setShareOpen}
+			/>
+			<ImportExportDialog
+				bundle={bundle}
+				open={ioOpen}
+				onOpenChange={setIoOpen}
 			/>
 		</AppShell>
 	);
