@@ -1,3 +1,9 @@
+import {
+	SignedIn,
+	SignedOut,
+	SignInButton,
+	UserButton,
+} from "@clerk/clerk-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({ component: App });
@@ -13,12 +19,29 @@ function App() {
 				<p className="mb-6 text-sm text-neutral-500">
 					Plan initiatives across lanes and timeframes, in real time.
 				</p>
-				<Link
-					to="/dashboard"
-					className="inline-block rounded-md bg-neutral-900 px-4 py-2 text-sm text-white"
-				>
-					Go to dashboard
-				</Link>
+
+				<SignedOut>
+					<SignInButton mode="modal">
+						<button
+							type="button"
+							className="inline-block rounded-md bg-neutral-900 px-4 py-2 text-sm text-white"
+						>
+							Sign in
+						</button>
+					</SignInButton>
+				</SignedOut>
+
+				<SignedIn>
+					<div className="flex items-center justify-center gap-3">
+						<Link
+							to="/dashboard"
+							className="inline-block rounded-md bg-neutral-900 px-4 py-2 text-sm text-white"
+						>
+							Go to dashboard
+						</Link>
+						<UserButton />
+					</div>
+				</SignedIn>
 			</div>
 		</main>
 	);
