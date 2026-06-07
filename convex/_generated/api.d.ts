@@ -16,6 +16,7 @@ import type * as lib_bundle from "../lib/bundle.js";
 import type * as lib_defaults from "../lib/defaults.js";
 import type * as milestones from "../milestones.js";
 import type * as roadmaps from "../roadmaps.js";
+import type * as sharing from "../sharing.js";
 import type * as users from "../users.js";
 
 import type {
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   "lib/defaults": typeof lib_defaults;
   milestones: typeof milestones;
   roadmaps: typeof roadmaps;
+  sharing: typeof sharing;
   users: typeof users;
 }>;
 
