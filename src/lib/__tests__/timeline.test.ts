@@ -4,6 +4,7 @@ import {
 	dateToX,
 	itemGeometry,
 	packLanes,
+	resolveDrag,
 	snapDate,
 	xToDate,
 } from "../timeline";
@@ -76,4 +77,39 @@ test("packLanes stacks overlapping items, shares rows for disjoint ones", () => 
 		{ startDate: 10, endDate: 20 },
 	]);
 	expect(disjoint).toEqual([0, 0]);
+});
+
+test("resolveDrag move preserves duration and snaps start to a month", () => {
+	const ws = ms(2026, 0, 1);
+	const we = ms(2026, 11, 31);
+	const item = { startDate: ms(2026, 1, 10), endDate: ms(2026, 2, 10) };
+	const axisWidth = 1200;
+	const out = resolveDrag(
+		"move",
+		item,
+		axisWidth / 12,
+		ws,
+		we,
+		axisWidth,
+		"month",
+	);
+	expect(new Date(out.startDate).getDate()).toBe(1);
+	expect(out.endDate - out.startDate).toBe(item.endDate - item.startDate);
+});
+
+test("resolveDrag resize-end keeps start and extends end", () => {
+	const ws = ms(2026, 0, 1);
+	const we = ms(2026, 11, 31);
+	const item = { startDate: ms(2026, 1, 1), endDate: ms(2026, 2, 1) };
+	const out = resolveDrag("resize-end", item, 200, ws, we, 1200, "month");
+	expect(out.startDate).toBe(item.startDate);
+	expect(out.endDate).toBeGreaterThan(item.startDate);
+});
+
+test("resolveDrag resize-start never crosses the end", () => {
+	const ws = ms(2026, 0, 1);
+	const we = ms(2026, 11, 31);
+	const item = { startDate: ms(2026, 1, 1), endDate: ms(2026, 2, 1) };
+	const out = resolveDrag("resize-start", item, 5000, ws, we, 1200, "month");
+	expect(out.startDate).toBeLessThan(item.endDate);
 });

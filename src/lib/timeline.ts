@@ -129,6 +129,39 @@ export function snapDate(
 	return (edge === "start" ? startOfHalf(d) : endOfHalf(d)).getTime();
 }
 
+export type DragMode = "move" | "resize-start" | "resize-end";
+
+export function resolveDrag(
+	mode: DragMode,
+	item: { startDate: number; endDate: number },
+	deltaX: number,
+	windowStart: number,
+	windowEnd: number,
+	axisWidth: number,
+	zoom: Zoom,
+): { startDate: number; endDate: number } {
+	const span = windowEnd - windowStart || 1;
+	const deltaMs = (deltaX / (axisWidth || 1)) * span;
+
+	if (mode === "move") {
+		const duration = item.endDate - item.startDate;
+		const start = snapDate(item.startDate + deltaMs, zoom, "start");
+		return { startDate: start, endDate: start + duration };
+	}
+	if (mode === "resize-start") {
+		let start = snapDate(item.startDate + deltaMs, zoom, "start");
+		if (start >= item.endDate) {
+			start = snapDate(item.endDate - 1, zoom, "start");
+		}
+		return { startDate: start, endDate: item.endDate };
+	}
+	let end = snapDate(item.endDate + deltaMs, zoom, "end");
+	if (end <= item.startDate) {
+		end = snapDate(item.startDate + 1, zoom, "end");
+	}
+	return { startDate: item.startDate, endDate: end };
+}
+
 /** First-fit packing. Returns the sub-row index for each item, in input order. */
 export function packLanes(
 	items: Array<{ startDate: number; endDate: number }>,
