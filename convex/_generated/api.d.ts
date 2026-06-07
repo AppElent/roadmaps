@@ -9,6 +9,7 @@
  */
 
 import type * as fields from "../fields.js";
+import type * as io from "../io.js";
 import type * as items from "../items.js";
 import type * as lanes from "../lanes.js";
 import type * as lib_auth from "../lib/auth.js";
@@ -27,6 +28,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   fields: typeof fields;
+  io: typeof io;
   items: typeof items;
   lanes: typeof lanes;
   "lib/auth": typeof lib_auth;
