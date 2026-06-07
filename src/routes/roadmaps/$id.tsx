@@ -5,12 +5,20 @@ import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { FieldManager } from "@/components/fields/FieldManager";
+import { FilterBar } from "@/components/filters/FilterBar";
 import { LaneManager } from "@/components/lanes/LaneManager";
 import { MilestoneManager } from "@/components/milestones/MilestoneManager";
 import { ItemEditorPanel } from "@/components/panel/ItemEditorPanel";
 import { RoadmapSettingsDialog } from "@/components/roadmaps/RoadmapSettingsDialog";
+import { ItemTable } from "@/components/table/ItemTable";
 import { TimelineView } from "@/components/timeline/TimelineView";
 import { ZoomSwitch } from "@/components/timeline/ZoomSwitch";
+import {
+	filterItems,
+	type ItemFilter,
+	type SortState,
+	sortItems,
+} from "@/lib/itemQuery";
 import type { Zoom } from "@/lib/timeline";
 
 export const Route = createFileRoute("/roadmaps/$id")({
@@ -27,11 +35,19 @@ function RoadmapEditor() {
 	const bundle = useQuery(api.roadmaps.getBundle, { roadmapId });
 	const updateItem = useMutation(api.items.update);
 	const [zoom, setZoom] = useState<Zoom | null>(null);
+	const [view, setView] = useState<"timeline" | "table">("timeline");
 	const [editing, setEditing] = useState<"new" | Id<"items"> | null>(null);
 	const [lanesOpen, setLanesOpen] = useState(false);
 	const [fieldsOpen, setFieldsOpen] = useState(false);
 	const [milestonesOpen, setMilestonesOpen] = useState(false);
 	const [settingsOpen, setSettingsOpen] = useState(false);
+	const [filter, setFilter] = useState<ItemFilter>({
+		search: "",
+		laneId: "all",
+		fieldKey: null,
+		optionId: "all",
+	});
+	const [sort, setSort] = useState<SortState>({ key: "startDate", dir: 1 });
 
 	if (bundle === undefined) {
 		return (
@@ -46,6 +62,8 @@ function RoadmapEditor() {
 		editing && editing !== "new"
 			? (bundle.items.find((i) => i._id === editing) ?? null)
 			: null;
+	const visibleItems = sortItems(filterItems(bundle.items, filter), sort);
+	const visibleBundle = { ...bundle, items: visibleItems };
 
 	return (
 		<AppShell>
@@ -58,7 +76,25 @@ function RoadmapEditor() {
 						<h1 className="text-2xl font-semibold">{bundle.roadmap.name}</h1>
 					</div>
 					<div className="flex flex-wrap items-center gap-2">
-						<ZoomSwitch value={activeZoom} onChange={setZoom} />
+						<div className="inline-flex overflow-hidden rounded-md border border-neutral-200">
+							{(["timeline", "table"] as const).map((v) => (
+								<button
+									key={v}
+									type="button"
+									onClick={() => setView(v)}
+									className={`border-r border-neutral-200 px-3 py-1.5 text-xs capitalize last:border-r-0 ${
+										v === view
+											? "bg-neutral-100 text-neutral-900"
+											: "text-neutral-500"
+									}`}
+								>
+									{v}
+								</button>
+							))}
+						</div>
+						{view === "timeline" ? (
+							<ZoomSwitch value={activeZoom} onChange={setZoom} />
+						) : null}
 						<button
 							type="button"
 							className={toolbarBtn}
@@ -96,14 +132,35 @@ function RoadmapEditor() {
 						</button>
 					</div>
 				</header>
-				<TimelineView
-					bundle={bundle}
-					zoom={activeZoom}
-					onSelectItem={(itemId) => setEditing(itemId)}
-					onItemDatesChange={(itemId, startDate, endDate) =>
-						updateItem({ itemId, startDate, endDate })
-					}
-				/>
+
+				<div className="mb-3">
+					<FilterBar
+						lanes={bundle.lanes}
+						fields={bundle.fields}
+						filter={filter}
+						onChange={setFilter}
+					/>
+				</div>
+
+				{view === "timeline" ? (
+					<TimelineView
+						bundle={visibleBundle}
+						zoom={activeZoom}
+						onSelectItem={(itemId) => setEditing(itemId)}
+						onItemDatesChange={(itemId, startDate, endDate) =>
+							updateItem({ itemId, startDate, endDate })
+						}
+					/>
+				) : (
+					<ItemTable
+						items={visibleItems}
+						fields={bundle.fields}
+						lanes={bundle.lanes}
+						sort={sort}
+						onSortChange={setSort}
+						onSelect={(itemId) => setEditing(itemId)}
+					/>
+				)}
 			</div>
 
 			{editing !== null ? (
