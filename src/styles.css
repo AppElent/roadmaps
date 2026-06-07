@@ -60,6 +60,15 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.871 0.006 286.286);
+
+  /* Roadmaps palette (adopt + refine the mockup) */
+  --rm-accent: oklch(58% 0.16 145);
+  --rm-accent-fg: oklch(99% 0 0);
+  --rm-grid-line: oklch(90% 0.008 240);
+  --rm-axis-fg: oklch(50% 0.018 240);
+  --rm-panel: oklch(100% 0 0);
+  --rm-panel-line: oklch(90% 0.008 240);
+  --rm-bar-bg: oklch(100% 0 0);
 }
 
 .dark {
@@ -115,6 +124,15 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.274 0.006 286.033);
   --sidebar-ring: oklch(0.442 0.017 285.786);
+
+  /* Roadmaps palette (dark) */
+  --rm-accent: oklch(64% 0.15 145);
+  --rm-accent-fg: oklch(18% 0.02 240);
+  --rm-grid-line: oklch(30% 0.01 240);
+  --rm-axis-fg: oklch(70% 0.02 240);
+  --rm-panel: oklch(20% 0.012 250);
+  --rm-panel-line: oklch(30% 0.01 240);
+  --rm-bar-bg: oklch(26% 0.012 250);
 }
 
 @theme inline {
@@ -343,5 +361,31 @@ a {
   body {
     background-color: var(--background);
     color: var(--foreground);
+  }
+}
+
+@layer components {
+  .rm-btn-primary {
+    background: var(--rm-accent);
+    color: var(--rm-accent-fg);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 520;
+  }
+  .rm-btn-primary:hover {
+    filter: brightness(0.96);
+  }
+  .rm-panel {
+    background: var(--rm-panel);
+    border: 1px solid var(--rm-panel-line);
+    border-radius: 0.5rem;
+  }
+  .rm-label {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--rm-axis-fg);
   }
 }
