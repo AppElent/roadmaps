@@ -1,7 +1,7 @@
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { ItemEditorPanel } from "@/components/panel/ItemEditorPanel";
@@ -18,6 +18,7 @@ function RoadmapEditor() {
 	const { id } = Route.useParams();
 	const roadmapId = id as Id<"roadmaps">;
 	const bundle = useQuery(api.roadmaps.getBundle, { roadmapId });
+	const updateItem = useMutation(api.items.update);
 	const [zoom, setZoom] = useState<Zoom | null>(null);
 	const [editing, setEditing] = useState<"new" | Id<"items"> | null>(null);
 
@@ -60,6 +61,9 @@ function RoadmapEditor() {
 					bundle={bundle}
 					zoom={activeZoom}
 					onSelectItem={(itemId) => setEditing(itemId)}
+					onItemDatesChange={(itemId, startDate, endDate) =>
+						updateItem({ itemId, startDate, endDate })
+					}
 				/>
 			</div>
 

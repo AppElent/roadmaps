@@ -3,9 +3,11 @@ import { useMemo } from "react";
 import { barColor } from "@/lib/roadmapColors";
 import {
 	buildPeriods,
+	type DragMode,
 	dateToX,
 	itemGeometry,
 	packLanes,
+	resolveDrag,
 	type Zoom,
 } from "@/lib/timeline";
 import { LaneRow } from "./LaneRow";
@@ -29,10 +31,16 @@ export function TimelineView({
 	bundle,
 	zoom,
 	onSelectItem,
+	onItemDatesChange,
 }: {
 	bundle: TimelineBundle;
 	zoom: Zoom;
 	onSelectItem?: (id: Doc<"items">["_id"]) => void;
+	onItemDatesChange?: (
+		itemId: Doc<"items">["_id"],
+		startDate: number,
+		endDate: number,
+	) => void;
 }) {
 	const { roadmap, fields, lanes, items, milestones } = bundle;
 
@@ -49,6 +57,21 @@ export function TimelineView({
 		const depth = laneItems.length ? Math.max(...packLanes(laneItems)) + 1 : 1;
 		return sum + depth * (ROW_HEIGHT + ROW_GAP) + ROW_GAP;
 	}, 0);
+
+	const handleItemDrag = onItemDatesChange
+		? (item: Doc<"items">, mode: DragMode, deltaX: number) => {
+				const next = resolveDrag(
+					mode,
+					item,
+					deltaX,
+					windowStart,
+					windowEnd,
+					axisWidth,
+					zoom,
+				);
+				onItemDatesChange(item._id, next.startDate, next.endDate);
+			}
+		: undefined;
 
 	return (
 		<div className="overflow-auto rounded-lg border border-neutral-200 bg-white">
@@ -80,7 +103,9 @@ export function TimelineView({
 								rowGap={ROW_GAP}
 								labelWidth={LABEL_WIDTH}
 								axisWidth={axisWidth}
+								unitWidth={COLUMN_WIDTH}
 								onSelect={onSelectItem}
+								onItemDrag={handleItemDrag}
 							/>
 						);
 					})}

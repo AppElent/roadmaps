@@ -1,4 +1,5 @@
 import type { Doc } from "@convex/_generated/dataModel";
+import type { DragMode } from "@/lib/timeline";
 import { ItemBar } from "./ItemBar";
 
 export function LaneRow({
@@ -11,7 +12,9 @@ export function LaneRow({
 	rowGap,
 	labelWidth,
 	axisWidth,
+	unitWidth,
 	onSelect,
+	onItemDrag,
 }: {
 	lane: Doc<"lanes">;
 	items: Doc<"items">[];
@@ -22,7 +25,9 @@ export function LaneRow({
 	rowGap: number;
 	labelWidth: number;
 	axisWidth: number;
+	unitWidth: number;
 	onSelect?: (id: Doc<"items">["_id"]) => void;
+	onItemDrag?: (item: Doc<"items">, mode: DragMode, deltaX: number) => void;
 }) {
 	const depth = items.length ? Math.max(...rows) + 1 : 1;
 	const height = depth * (rowHeight + rowGap) + rowGap;
@@ -46,7 +51,13 @@ export function LaneRow({
 						width={geometries[i].width}
 						top={rows[i] * (rowHeight + rowGap) + rowGap}
 						color={colors[i]}
+						unitWidth={unitWidth}
 						onSelect={onSelect}
+						onDragCommit={
+							onItemDrag
+								? (mode, deltaX) => onItemDrag(item, mode, deltaX)
+								: undefined
+						}
 					/>
 				))}
 			</div>
