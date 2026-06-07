@@ -42,8 +42,7 @@ test("unauthenticated create is rejected", async () => {
 	).rejects.toThrow(/Not authenticated/);
 });
 
-// Unskip after Task 5 (depends on api.items.create).
-test.skip("duplicate clones fields, lanes, and items", async () => {
+test("duplicate clones fields, lanes, and items", async () => {
 	const t = convexTest(schema, modules);
 	const asAlex = t.withIdentity({ subject: "user_alex" });
 	const roadmapId = await asAlex.mutation(api.roadmaps.create, {
