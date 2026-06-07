@@ -12,6 +12,7 @@ import type * as fields from "../fields.js";
 import type * as items from "../items.js";
 import type * as lanes from "../lanes.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_bundle from "../lib/bundle.js";
 import type * as lib_defaults from "../lib/defaults.js";
 import type * as milestones from "../milestones.js";
 import type * as roadmaps from "../roadmaps.js";
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   items: typeof items;
   lanes: typeof lanes;
   "lib/auth": typeof lib_auth;
+  "lib/bundle": typeof lib_bundle;
   "lib/defaults": typeof lib_defaults;
   milestones: typeof milestones;
   roadmaps: typeof roadmaps;

@@ -1,42 +1,10 @@
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import { mutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { requireRoadmapOwner, requireUser } from "./lib/auth";
+import { loadRoadmapChildren } from "./lib/bundle";
 import { DEFAULT_STATUS_OPTIONS, STATUS_FIELD_KEY } from "./lib/defaults";
 import { zoomValidator } from "./schema";
-
-const byOrder = <T extends { order: number }>(rows: T[]): T[] =>
-	[...rows].sort((a, b) => a.order - b.order);
-
-async function loadChildren(
-	ctx: QueryCtx | MutationCtx,
-	roadmapId: Id<"roadmaps">,
-) {
-	const [fields, lanes, items, milestones] = await Promise.all([
-		ctx.db
-			.query("fields")
-			.withIndex("by_roadmap", (q) => q.eq("roadmapId", roadmapId))
-			.collect(),
-		ctx.db
-			.query("lanes")
-			.withIndex("by_roadmap", (q) => q.eq("roadmapId", roadmapId))
-			.collect(),
-		ctx.db
-			.query("items")
-			.withIndex("by_roadmap", (q) => q.eq("roadmapId", roadmapId))
-			.collect(),
-		ctx.db
-			.query("milestones")
-			.withIndex("by_roadmap", (q) => q.eq("roadmapId", roadmapId))
-			.collect(),
-	]);
-	return {
-		fields: byOrder(fields),
-		lanes: byOrder(lanes),
-		items: byOrder(items),
-		milestones,
-	};
-}
 
 export const list = query({
 	args: {},
@@ -72,7 +40,7 @@ export const getBundle = query({
 	args: { roadmapId: v.id("roadmaps") },
 	handler: async (ctx, args) => {
 		const { roadmap } = await requireRoadmapOwner(ctx, args.roadmapId);
-		return { roadmap, ...(await loadChildren(ctx, args.roadmapId)) };
+		return { roadmap, ...(await loadRoadmapChildren(ctx, args.roadmapId)) };
 	},
 });
 
@@ -172,7 +140,7 @@ export const duplicate = mutation({
 	args: { roadmapId: v.id("roadmaps") },
 	handler: async (ctx, args) => {
 		const { userId, roadmap } = await requireRoadmapOwner(ctx, args.roadmapId);
-		const children = await loadChildren(ctx, args.roadmapId);
+		const children = await loadRoadmapChildren(ctx, args.roadmapId);
 		const newId = await ctx.db.insert("roadmaps", {
 			userId,
 			name: `${roadmap.name} (copy)`,
