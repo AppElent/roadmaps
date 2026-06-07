@@ -13,7 +13,7 @@ The MVP is delivered as a sequence of phases. **Each phase produces working, tes
 | 2 | `2026-06-07-roadmaps-phase-2-dashboard.md` | App shell, roadmap library, create/duplicate/archive |
 | 3 | `2026-06-07-roadmaps-phase-3-timeline.md` | `src/lib/timeline.ts` (TDD) + read-only timeline view (axis, lanes, item bars, milestones) |
 | 4 | `2026-06-07-roadmaps-phase-4-fields-editor.md` | `src/lib/fields.ts` (TDD) + `FieldValueInput` + slide-over item editor + create/edit |
-| 5 | `2026-06-07-roadmaps-phase-5-drag-manage.md` | Drag/resize on item bars + lane management + field manager |
+| 5 | `2026-06-07-roadmaps-phase-5-drag-manage.md` | Drag/resize on item bars + lane manager + field manager + milestone manager + roadmap settings |
 | 6 | `2026-06-07-roadmaps-phase-6-table-filter.md` | Sortable table view (custom columns) + filtering |
 | 7 | `2026-06-07-roadmaps-phase-7-sharing.md` | Share token + public `share/$token` read-only route |
 | 8 | `2026-06-07-roadmaps-phase-8-import-export.md` | Import/Export JSON |

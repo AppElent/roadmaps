@@ -22,6 +22,8 @@
 - Modify: `src/routes/roadmaps/$id.tsx` — provide the dates-change mutation + open managers
 - Create: `src/components/lanes/LaneManager.tsx`
 - Create: `src/components/fields/FieldManager.tsx`
+- Create: `src/components/milestones/MilestoneManager.tsx`
+- Create: `src/components/roadmaps/RoadmapSettingsDialog.tsx`
 
 ---
 
@@ -687,8 +689,274 @@ git commit -m "feat: custom field manager dialog"
 
 ---
 
+### Task 6: Milestone manager
+
+**Files:**
+- Create: `src/components/milestones/MilestoneManager.tsx`
+- Modify: `src/routes/roadmaps/$id.tsx` — add a "Milestones" button
+
+- [ ] **Step 1: Implement `MilestoneManager.tsx`**
+
+```tsx
+import { useState } from "react";
+import { Dialog } from "radix-ui";
+import { useMutation } from "convex/react";
+import { Plus, Trash2 } from "lucide-react";
+import { api } from "@convex/_generated/api";
+import type { Doc, Id } from "@convex/_generated/dataModel";
+import { dateInputToMs, msToDateInput } from "@/lib/fields";
+
+export function MilestoneManager({
+	roadmapId,
+	milestones,
+	open,
+	onOpenChange,
+}: {
+	roadmapId: Id<"roadmaps">;
+	milestones: Doc<"milestones">[];
+	open: boolean;
+	onOpenChange: (v: boolean) => void;
+}) {
+	const createMilestone = useMutation(api.milestones.create);
+	const updateMilestone = useMutation(api.milestones.update);
+	const removeMilestone = useMutation(api.milestones.remove);
+	const [name, setName] = useState("");
+	const [date, setDate] = useState("");
+
+	return (
+		<Dialog.Root open={open} onOpenChange={onOpenChange}>
+			<Dialog.Portal>
+				<Dialog.Overlay className="fixed inset-0 z-40 bg-black/30" />
+				<Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(480px,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-neutral-200 bg-white p-5 shadow-xl">
+					<Dialog.Title className="text-base font-semibold">Milestones</Dialog.Title>
+					<div className="mt-4 space-y-2">
+						{milestones.map((m) => (
+							<div key={m._id} className="flex items-center gap-2">
+								<input
+									className="flex-1 rounded-md border border-neutral-200 px-2 py-1.5 text-sm"
+									defaultValue={m.name}
+									onBlur={(e) =>
+										e.target.value !== m.name &&
+										updateMilestone({ milestoneId: m._id, name: e.target.value })
+									}
+								/>
+								<input
+									type="date"
+									className="rounded-md border border-neutral-200 px-2 py-1.5 text-sm"
+									defaultValue={msToDateInput(m.date)}
+									onChange={(e) =>
+										e.target.value &&
+										updateMilestone({
+											milestoneId: m._id,
+											date: dateInputToMs(e.target.value),
+										})
+									}
+								/>
+								<button
+									type="button"
+									onClick={() => removeMilestone({ milestoneId: m._id })}
+									className="text-neutral-500"
+								>
+									<Trash2 size={16} />
+								</button>
+							</div>
+						))}
+					</div>
+					<div className="mt-4 flex items-end gap-2 border-t border-neutral-200 pt-4">
+						<label className="flex-1 text-sm">
+							Name
+							<input
+								className="mt-1 w-full rounded-md border border-neutral-200 px-2 py-1.5"
+								value={name}
+								onChange={(e) => setName(e.target.value)}
+							/>
+						</label>
+						<label className="text-sm">
+							Date
+							<input
+								type="date"
+								className="mt-1 rounded-md border border-neutral-200 px-2 py-1.5"
+								value={date}
+								onChange={(e) => setDate(e.target.value)}
+							/>
+						</label>
+						<button
+							type="button"
+							onClick={async () => {
+								if (!name.trim() || !date) return;
+								await createMilestone({
+									roadmapId,
+									name: name.trim(),
+									date: dateInputToMs(date),
+								});
+								setName("");
+								setDate("");
+							}}
+							className="flex items-center gap-1 rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white"
+						>
+							<Plus size={14} /> Add
+						</button>
+					</div>
+				</Dialog.Content>
+			</Dialog.Portal>
+		</Dialog.Root>
+	);
+}
+```
+
+- [ ] **Step 2: Open it from the route**
+
+In `src/routes/roadmaps/$id.tsx`, add `const [milestonesOpen, setMilestonesOpen] = useState(false);`, a "Milestones" header button, and render `<MilestoneManager roadmapId={roadmapId} milestones={bundle.milestones} open={milestonesOpen} onOpenChange={setMilestonesOpen} />` with the matching import.
+
+- [ ] **Step 3: Verify + commit**
+
+Run: `npm run dev:all`. Add a milestone with a date inside the window → a marker appears on the timeline at that date; rename it; delete it.
+
+```bash
+npm run check
+git add src/components/milestones/MilestoneManager.tsx src/routes/roadmaps/$id.tsx
+git commit -m "feat: milestone manager dialog"
+```
+
+---
+
+### Task 7: Roadmap settings dialog
+
+**Files:**
+- Create: `src/components/roadmaps/RoadmapSettingsDialog.tsx`
+- Modify: `src/routes/roadmaps/$id.tsx` — add a "Settings" button
+
+Lets the owner rename the roadmap, adjust the timeframe window, set the default zoom, and choose which select field colors the bars (`colorByFieldKey`, per spec §10).
+
+- [ ] **Step 1: Implement `RoadmapSettingsDialog.tsx`**
+
+```tsx
+import { Dialog } from "radix-ui";
+import { useMutation } from "convex/react";
+import { api } from "@convex/_generated/api";
+import type { Doc } from "@convex/_generated/dataModel";
+import { dateInputToMs, msToDateInput } from "@/lib/fields";
+import type { Zoom } from "@/lib/timeline";
+
+const ZOOMS: Zoom[] = ["week", "month", "quarter", "half"];
+
+export function RoadmapSettingsDialog({
+	roadmap,
+	fields,
+	open,
+	onOpenChange,
+}: {
+	roadmap: Doc<"roadmaps">;
+	fields: Doc<"fields">[];
+	open: boolean;
+	onOpenChange: (v: boolean) => void;
+}) {
+	const update = useMutation(api.roadmaps.update);
+	const selectFields = fields.filter(
+		(f) => f.type === "select" || f.type === "multiselect",
+	);
+	const base = "mt-1 w-full rounded-md border border-neutral-200 px-2 py-2 text-sm";
+
+	return (
+		<Dialog.Root open={open} onOpenChange={onOpenChange}>
+			<Dialog.Portal>
+				<Dialog.Overlay className="fixed inset-0 z-40 bg-black/30" />
+				<Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(480px,92vw)] -translate-x-1/2 -translate-y-1/2 space-y-3 rounded-lg border border-neutral-200 bg-white p-5 shadow-xl">
+					<Dialog.Title className="text-base font-semibold">Roadmap settings</Dialog.Title>
+					<label className="block text-sm">
+						Name
+						<input
+							className={base}
+							defaultValue={roadmap.name}
+							onBlur={(e) =>
+								e.target.value !== roadmap.name &&
+								update({ roadmapId: roadmap._id, name: e.target.value })
+							}
+						/>
+					</label>
+					<div className="grid grid-cols-2 gap-2">
+						<label className="block text-sm">
+							Start
+							<input
+								type="date"
+								className={base}
+								defaultValue={msToDateInput(roadmap.startDate)}
+								onChange={(e) =>
+									e.target.value &&
+									update({ roadmapId: roadmap._id, startDate: dateInputToMs(e.target.value) })
+								}
+							/>
+						</label>
+						<label className="block text-sm">
+							End
+							<input
+								type="date"
+								className={base}
+								defaultValue={msToDateInput(roadmap.endDate)}
+								onChange={(e) =>
+									e.target.value &&
+									update({ roadmapId: roadmap._id, endDate: dateInputToMs(e.target.value) })
+								}
+							/>
+						</label>
+					</div>
+					<label className="block text-sm">
+						Default zoom
+						<select
+							className={base}
+							defaultValue={roadmap.defaultZoom}
+							onChange={(e) =>
+								update({ roadmapId: roadmap._id, defaultZoom: e.target.value as Zoom })
+							}
+						>
+							{ZOOMS.map((z) => (
+								<option key={z} value={z}>
+									{z}
+								</option>
+							))}
+						</select>
+					</label>
+					<label className="block text-sm">
+						Color items by
+						<select
+							className={base}
+							defaultValue={roadmap.colorByFieldKey ?? ""}
+							onChange={(e) =>
+								update({ roadmapId: roadmap._id, colorByFieldKey: e.target.value })
+							}
+						>
+							{selectFields.map((f) => (
+								<option key={f._id} value={f.key}>
+									{f.label}
+								</option>
+							))}
+						</select>
+					</label>
+				</Dialog.Content>
+			</Dialog.Portal>
+		</Dialog.Root>
+	);
+}
+```
+
+- [ ] **Step 2: Open it from the route**
+
+Add `const [settingsOpen, setSettingsOpen] = useState(false);`, a "Settings" header button, and render `<RoadmapSettingsDialog roadmap={bundle.roadmap} fields={bundle.fields} open={settingsOpen} onOpenChange={setSettingsOpen} />` with the matching import.
+
+- [ ] **Step 3: Verify + commit**
+
+Run: `npm run dev:all`. Rename the roadmap, change the window dates (axis re-buckets), switch default zoom, and change color-by to another select field (bar colors update). Reload to confirm persistence.
+
+```bash
+npm run check
+git add src/components/roadmaps/RoadmapSettingsDialog.tsx src/routes/roadmaps/$id.tsx
+git commit -m "feat: roadmap settings dialog"
+```
+
+---
+
 ## Self-review notes
 
-- **Spec coverage:** drag-to-reschedule + resize with snap-to-unit (§6) ✓; keyboard nudge a11y (§6) ✓; lane management with move-on-delete + default-lane guard (§4) ✓; field manager: add/rename/recolor options/showInTable/remove non-system (§3, §5) ✓.
+- **Spec coverage:** drag-to-reschedule + resize with snap-to-unit (§6) ✓; keyboard nudge a11y (§6) ✓; lane management with move-on-delete + default-lane guard (§4) ✓; field manager: add/rename/recolor options/showInTable/remove non-system (§3, §5) ✓; milestone create/edit/delete UI (§1 MVP surface, §4) ✓; roadmap settings — rename, timeframe, default zoom, configurable `colorByFieldKey` (§10) ✓.
 - **Type consistency:** `resolveDrag`/`DragMode` reused by `ItemBar` → `LaneRow` → `TimelineView`. `onItemDatesChange` is optional, so `TimelineView` stays read-only for Phase 7's share view. Field option ids are stable strings; editing labels/colors preserves ids so existing item values stay valid.
 - **Note:** editing a select field's option ids is intentionally not exposed (only labels/colors), preventing orphaned item values. Removing a whole field strips its values server-side (Phase 1 `fields.remove`).
