@@ -1,6 +1,7 @@
 import { UserButton } from "@clerk/clerk-react";
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Map as MapIcon } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 export function Sidebar() {
 	return (
@@ -21,8 +22,10 @@ export function Sidebar() {
 			</nav>
 			<div className="mt-auto flex items-center gap-2 px-1">
 				<UserButton />
-				<span className="font-mono text-xs text-neutral-500">Account</span>
-				<MapIcon size={14} className="ml-auto text-neutral-300" />
+				<span className="rm-label">Account</span>
+				<div className="ml-auto">
+					<ThemeToggle />
+				</div>
 			</div>
 		</aside>
 	);
