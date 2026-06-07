@@ -1,5 +1,10 @@
 import { expect, test } from "vitest";
-import { emptyValue, type FieldDef, validateValues } from "../fields";
+import {
+	displayValue,
+	emptyValue,
+	type FieldDef,
+	validateValues,
+} from "../fields";
 
 const field = (over: Partial<FieldDef>): FieldDef =>
 	({
@@ -49,4 +54,13 @@ test("missing, null, and empty-string values are omitted, unknown keys dropped",
 test("emptyValue returns [] for multiselect and null otherwise", () => {
 	expect(emptyValue(field({ type: "multiselect" }))).toEqual([]);
 	expect(emptyValue(field({ type: "text", options: undefined }))).toBeNull();
+});
+
+test("displayValue formats select labels and multiselect joins", () => {
+	const select = field({});
+	expect(displayValue(select, "done")).toBe("Done");
+	const multi = field({ type: "multiselect" });
+	expect(displayValue(multi, ["planned", "done"])).toBe("Planned, Done");
+	const text = field({ type: "text", options: undefined });
+	expect(displayValue(text, null)).toBe("");
 });
