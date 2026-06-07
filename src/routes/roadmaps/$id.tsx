@@ -10,6 +10,7 @@ import { LaneManager } from "@/components/lanes/LaneManager";
 import { MilestoneManager } from "@/components/milestones/MilestoneManager";
 import { ItemEditorPanel } from "@/components/panel/ItemEditorPanel";
 import { RoadmapSettingsDialog } from "@/components/roadmaps/RoadmapSettingsDialog";
+import { ShareDialog } from "@/components/share/ShareDialog";
 import { ItemTable } from "@/components/table/ItemTable";
 import { TimelineView } from "@/components/timeline/TimelineView";
 import { ZoomSwitch } from "@/components/timeline/ZoomSwitch";
@@ -41,6 +42,7 @@ function RoadmapEditor() {
 	const [fieldsOpen, setFieldsOpen] = useState(false);
 	const [milestonesOpen, setMilestonesOpen] = useState(false);
 	const [settingsOpen, setSettingsOpen] = useState(false);
+	const [shareOpen, setShareOpen] = useState(false);
 	const [filter, setFilter] = useState<ItemFilter>({
 		search: "",
 		laneId: "all",
@@ -125,6 +127,13 @@ function RoadmapEditor() {
 						</button>
 						<button
 							type="button"
+							className={toolbarBtn}
+							onClick={() => setShareOpen(true)}
+						>
+							Share
+						</button>
+						<button
+							type="button"
 							onClick={() => setEditing("new")}
 							className="rounded-md bg-neutral-900 px-3 py-2 text-sm text-white"
 						>
@@ -197,6 +206,11 @@ function RoadmapEditor() {
 				fields={bundle.fields}
 				open={settingsOpen}
 				onOpenChange={setSettingsOpen}
+			/>
+			<ShareDialog
+				roadmap={bundle.roadmap}
+				open={shareOpen}
+				onOpenChange={setShareOpen}
 			/>
 		</AppShell>
 	);
