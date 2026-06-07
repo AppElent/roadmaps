@@ -1,0 +1,1041 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Roadplane - Roadmap editor</title>
+  <style>
+    :root {
+      --bg:      oklch(98% 0.005 250);
+      --surface: oklch(100% 0 0);
+      --fg:      oklch(22% 0.02 240);
+      --muted:   oklch(50% 0.018 240);
+      --border:  oklch(90% 0.008 240);
+      --accent:  oklch(58% 0.16 145);
+
+      --font-display: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+      --font-body:    -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+      --accent-soft: color-mix(in oklch, var(--accent) 13%, transparent);
+      --fg-soft: color-mix(in oklch, var(--fg) 5%, transparent);
+      --warn: oklch(69% 0.13 78);
+      --danger: oklch(62% 0.18 25);
+      --info: oklch(60% 0.15 245);
+      --radius: 8px;
+      --shadow: 0 18px 48px color-mix(in oklch, var(--fg) 10%, transparent);
+    }
+
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.45;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    h1, h2, h3, p { margin: 0; }
+    h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0; text-wrap: balance; }
+    p { text-wrap: pretty; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      background: var(--surface);
+      border-inline-end: 1px solid var(--border);
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 6px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand-mark {
+      inline-size: 30px;
+      block-size: 30px;
+      border: 1px solid var(--fg);
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .brand strong { display: block; font-size: 14px; }
+    .brand span { display: block; color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
+
+    .side-section { display: grid; gap: 6px; }
+    .side-label {
+      padding: 0 8px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .nav-item {
+      width: 100%;
+      border: 0;
+      border-radius: var(--radius);
+      padding: 9px 10px;
+      background: transparent;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: start;
+    }
+
+    .nav-item.active,
+    .nav-item:hover {
+      background: var(--fg-soft);
+      color: var(--fg);
+    }
+
+    .nav-count {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .account-card {
+      margin-top: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      background: var(--bg);
+    }
+
+    .avatar-row { display: flex; align-items: center; gap: 10px; }
+    .avatar {
+      inline-size: 30px;
+      block-size: 30px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--fg);
+      color: var(--surface);
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+    .account-card strong { display: block; font-size: 13px; }
+    .account-card span { display: block; color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
+
+    .main {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: color-mix(in oklch, var(--bg) 92%, transparent);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .title-block { min-width: 0; }
+    .eyebrow {
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 3px;
+    }
+    h1 { font-size: 23px; line-height: 1.15; }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--fg);
+      border-radius: var(--radius);
+      min-height: 34px;
+      padding: 7px 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-weight: 520;
+      white-space: nowrap;
+    }
+
+    .btn:hover { border-color: color-mix(in oklch, var(--fg) 36%, var(--border)); }
+    .btn.primary { border-color: var(--accent); background: var(--accent); color: var(--surface); }
+    .btn.ghost { background: transparent; }
+    .icon { font-family: var(--font-mono); font-size: 13px; line-height: 1; }
+
+    .filters {
+      padding: 14px 22px;
+      display: grid;
+      grid-template-columns: minmax(240px, 1.2fr) repeat(4, minmax(140px, .6fr));
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .control {
+      display: grid;
+      gap: 5px;
+    }
+
+    .control label {
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .input, .select, .textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--fg);
+      padding: 8px 10px;
+      min-height: 36px;
+    }
+
+    .input:focus, .select:focus, .textarea:focus {
+      outline: 2px solid var(--accent-soft);
+      border-color: var(--accent);
+    }
+
+    .workspace {
+      min-width: 0;
+      padding: 18px 22px 26px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 350px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      min-width: 0;
+    }
+
+    .panel-head {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .panel-title h2 { font-size: 15px; }
+    .meta, .num {
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .segmented {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .segment {
+      border: 0;
+      border-inline-end: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      min-height: 32px;
+      padding: 6px 10px;
+    }
+    .segment:last-child { border-inline-end: 0; }
+    .segment.active { color: var(--fg); background: var(--fg-soft); }
+
+    .roadmap-wrap { overflow: auto; }
+    .roadmap {
+      min-width: 1040px;
+      display: grid;
+      grid-template-columns: 170px repeat(6, minmax(130px, 1fr));
+    }
+
+    .time-cell,
+    .lane-label,
+    .lane-cell {
+      border-bottom: 1px solid var(--border);
+      border-inline-end: 1px solid var(--border);
+      min-height: 104px;
+      padding: 10px;
+      position: relative;
+    }
+
+    .time-cell {
+      min-height: 42px;
+      background: var(--bg);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      display: flex;
+      align-items: center;
+    }
+
+    .time-cell:first-child {
+      position: sticky;
+      inset-inline-start: 0;
+      z-index: 3;
+      background: var(--bg);
+    }
+
+    .lane-label {
+      position: sticky;
+      inset-inline-start: 0;
+      z-index: 2;
+      background: var(--surface);
+      display: grid;
+      align-content: start;
+      gap: 5px;
+    }
+
+    .lane-label strong { font-size: 13px; }
+    .lane-label span { color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
+    .lane-cell { background-image: linear-gradient(to bottom, transparent, transparent); }
+
+    .roadmap-card {
+      position: absolute;
+      inset-block-start: 9px;
+      inset-inline-start: 8px;
+      inline-size: calc(var(--span, 1) * 100% + (var(--span, 1) - 1) * 1px - 16px);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface);
+      padding: 9px;
+      display: grid;
+      gap: 6px;
+      box-shadow: 0 1px 0 color-mix(in oklch, var(--fg) 6%, transparent);
+    }
+
+    .roadmap-card:hover { border-color: color-mix(in oklch, var(--fg) 38%, var(--border)); }
+    .roadmap-card strong { font-size: 12px; line-height: 1.25; }
+
+    .card-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 7px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .pill.green { background: var(--accent-soft); color: color-mix(in oklch, var(--accent) 76%, var(--fg)); border-color: color-mix(in oklch, var(--accent) 22%, var(--border)); }
+    .pill.warn { background: color-mix(in oklch, var(--warn) 15%, transparent); color: color-mix(in oklch, var(--warn) 70%, var(--fg)); }
+    .pill.danger { background: color-mix(in oklch, var(--danger) 12%, transparent); color: color-mix(in oklch, var(--danger) 74%, var(--fg)); }
+    .pill.info { background: color-mix(in oklch, var(--info) 12%, transparent); color: color-mix(in oklch, var(--info) 74%, var(--fg)); }
+
+    .details {
+      display: grid;
+      gap: 16px;
+    }
+
+    .form-grid {
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .form-grid .wide { grid-column: 1 / -1; }
+    .textarea { resize: vertical; min-height: 78px; }
+
+    .saved-list {
+      display: grid;
+      gap: 8px;
+      padding: 14px;
+    }
+
+    .saved-row {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px;
+      display: grid;
+      gap: 4px;
+      background: var(--bg);
+    }
+    .saved-row strong { font-size: 13px; }
+
+    .table-wrap { overflow: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 10px 12px;
+      text-align: start;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    th {
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 520;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+    }
+    tbody tr:hover { background: var(--fg-soft); }
+    th button {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      text-transform: inherit;
+      letter-spacing: inherit;
+      font-family: inherit;
+      font-size: inherit;
+    }
+
+    .drawer {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      background: color-mix(in oklch, var(--fg) 22%, transparent);
+      z-index: 50;
+    }
+    .drawer.open { display: grid; }
+    .modal {
+      width: min(760px, 100%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+    }
+    .modal-body {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .codebox {
+      width: 100%;
+      min-height: 220px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      resize: vertical;
+    }
+
+    .status-line {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    @media (max-width: 1120px) {
+      .workspace { grid-template-columns: 1fr; }
+      .details { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 920px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar {
+        position: relative;
+        height: auto;
+        border-inline-end: 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .side-section { display: none; }
+      .account-card { margin-top: 0; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .toolbar { justify-content: flex-start; }
+      .filters { grid-template-columns: 1fr 1fr; }
+      .details { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 620px) {
+      .filters { grid-template-columns: 1fr; }
+      .workspace { padding: 12px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid .wide { grid-column: auto; }
+      .btn { width: 100%; justify-content: center; }
+      .toolbar { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Roadmap navigation">
+      <div class="brand">
+        <div class="brand-mark">RP</div>
+        <div>
+          <strong>Roadplane</strong>
+          <span>planning workspace</span>
+        </div>
+      </div>
+
+      <div class="side-section">
+        <div class="side-label">Roadmaps</div>
+        <button class="nav-item active"><span>Platform roadmap</span><span class="nav-count">12</span></button>
+        <button class="nav-item"><span>Mobile launch</span><span class="nav-count">8</span></button>
+        <button class="nav-item"><span>Integrations</span><span class="nav-count">6</span></button>
+      </div>
+
+      <div class="side-section">
+        <div class="side-label">Views</div>
+        <button class="nav-item"><span>Timeline</span><span class="nav-count">Q</span></button>
+        <button class="nav-item"><span>Item table</span><span class="nav-count">T</span></button>
+        <button class="nav-item"><span>Dependencies</span><span class="nav-count">D</span></button>
+      </div>
+
+      <section class="account-card" data-od-id="login-card">
+        <div class="avatar-row">
+          <div class="avatar" id="avatar">AJ</div>
+          <div>
+            <strong id="accountName">Alex Jensen</strong>
+            <span id="saveState">Saved 2 min ago</span>
+          </div>
+        </div>
+        <button class="btn" id="loginBtn"><span class="icon">in</span><span id="loginText">Switch account</span></button>
+      </section>
+    </aside>
+
+    <main class="main">
+      <header class="topbar" data-od-id="app-header">
+        <div class="title-block">
+          <p class="eyebrow">Platform roadmap / FY2026</p>
+          <h1>Plan across lanes, periods, and item data</h1>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="saveBtn"><span class="icon">S</span>Save</button>
+          <button class="btn" id="importBtn"><span class="icon">I</span>Import</button>
+          <button class="btn" id="exportBtn"><span class="icon">E</span>Export</button>
+          <button class="btn primary" id="newItemBtn"><span class="icon">+</span>New item</button>
+        </div>
+      </header>
+
+      <section class="filters" data-od-id="filters">
+        <div class="control">
+          <label for="search">Search items</label>
+          <input class="input" id="search" type="search" placeholder="Search title, owner, lane, dependency" />
+        </div>
+        <div class="control">
+          <label for="periodMode">Time period</label>
+          <select class="select" id="periodMode">
+            <option value="week">Week</option>
+            <option value="month" selected>Month</option>
+            <option value="quarter">Quarter</option>
+            <option value="half">Half year</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="laneFilter">Swimlane</label>
+          <select class="select" id="laneFilter">
+            <option value="all">All lanes</option>
+            <option>Growth</option>
+            <option>Core Product</option>
+            <option>Enterprise</option>
+            <option>Platform</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="statusFilter">Status</label>
+          <select class="select" id="statusFilter">
+            <option value="all">Any status</option>
+            <option>Committed</option>
+            <option>Discovery</option>
+            <option>At risk</option>
+            <option>Shipped</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="sortBy">Sort table by</label>
+          <select class="select" id="sortBy">
+            <option value="start">Start date</option>
+            <option value="priority">Priority</option>
+            <option value="confidence">Confidence</option>
+            <option value="owner">Owner</option>
+          </select>
+        </div>
+      </section>
+
+      <div class="workspace">
+        <section class="panel" data-od-id="roadmap-timeline">
+          <div class="panel-head">
+            <div class="panel-title">
+              <h2>Timeline roadmap</h2>
+              <span class="meta" id="visibleCount">0 visible</span>
+            </div>
+            <div class="segmented" aria-label="Roadmap density">
+              <button class="segment active" data-density="compact">Compact</button>
+              <button class="segment" data-density="relaxed">Relaxed</button>
+            </div>
+          </div>
+          <div class="roadmap-wrap">
+            <div class="roadmap" id="roadmap"></div>
+          </div>
+          <div class="status-line">
+            <span id="timelineLabel">Month view / Jan-Jun 2026</span>
+            <span>Drag-ready layout / edit in side panel</span>
+          </div>
+        </section>
+
+        <aside class="details">
+          <section class="panel" data-od-id="item-editor">
+            <div class="panel-head">
+              <div class="panel-title">
+                <h2>Item editor</h2>
+                <span class="meta" id="editingId">RD-103</span>
+              </div>
+            </div>
+            <form class="form-grid" id="itemForm">
+              <div class="control wide">
+                <label for="itemTitle">Title</label>
+                <input class="input" id="itemTitle" />
+              </div>
+              <div class="control">
+                <label for="itemLane">Swimlane</label>
+                <select class="select" id="itemLane">
+                  <option>Growth</option>
+                  <option>Core Product</option>
+                  <option>Enterprise</option>
+                  <option>Platform</option>
+                </select>
+              </div>
+              <div class="control">
+                <label for="itemStatus">Status</label>
+                <select class="select" id="itemStatus">
+                  <option>Committed</option>
+                  <option>Discovery</option>
+                  <option>At risk</option>
+                  <option>Shipped</option>
+                </select>
+              </div>
+              <div class="control">
+                <label for="itemOwner">Owner</label>
+                <input class="input" id="itemOwner" />
+              </div>
+              <div class="control">
+                <label for="itemPriority">Priority</label>
+                <select class="select" id="itemPriority">
+                  <option>P0</option>
+                  <option>P1</option>
+                  <option>P2</option>
+                </select>
+              </div>
+              <div class="control">
+                <label for="itemStart">Start</label>
+                <input class="input" id="itemStart" type="month" />
+              </div>
+              <div class="control">
+                <label for="itemEnd">End</label>
+                <input class="input" id="itemEnd" type="month" />
+              </div>
+              <div class="control wide">
+                <label for="itemNotes">Notes</label>
+                <textarea class="textarea" id="itemNotes"></textarea>
+              </div>
+              <div class="wide">
+                <button class="btn primary" type="submit"><span class="icon">ok</span>Apply changes</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel" data-od-id="saved-roadmaps">
+            <div class="panel-head">
+              <div class="panel-title">
+                <h2>Saved roadmaps</h2>
+                <span class="meta">cloud prototype</span>
+              </div>
+            </div>
+            <div class="saved-list">
+              <div class="saved-row">
+                <strong>Platform roadmap</strong>
+                <span class="meta">private / updated today / 12 items</span>
+              </div>
+              <div class="saved-row">
+                <strong>Executive readout</strong>
+                <span class="meta">shared link / updated May 28 / 9 items</span>
+              </div>
+            </div>
+          </section>
+        </aside>
+
+        <section class="panel" data-od-id="roadmap-table" style="grid-column: 1 / -1;">
+          <div class="panel-head">
+            <div class="panel-title">
+              <h2>Sortable item data</h2>
+              <span class="meta">columns map to import/export schema</span>
+            </div>
+            <button class="btn ghost" id="clearFilters"><span class="icon">x</span>Clear filters</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th><button data-sort="id">ID <span>sort</span></button></th>
+                  <th><button data-sort="title">Item <span>sort</span></button></th>
+                  <th><button data-sort="lane">Swimlane <span>sort</span></button></th>
+                  <th><button data-sort="owner">Owner <span>sort</span></button></th>
+                  <th><button data-sort="status">Status <span>sort</span></button></th>
+                  <th><button data-sort="priority">Priority <span>sort</span></button></th>
+                  <th><button data-sort="confidence">Confidence <span>sort</span></button></th>
+                  <th><button data-sort="start">Start <span>sort</span></button></th>
+                  <th><button data-sort="end">End <span>sort</span></button></th>
+                  <th>Dependency</th>
+                </tr>
+              </thead>
+              <tbody id="itemRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="drawer" id="dataModal" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="panel-head">
+        <div class="panel-title">
+          <h2 id="modalTitle">Export roadmap data</h2>
+          <span class="meta">JSON schema</span>
+        </div>
+        <button class="btn ghost" id="closeModal"><span class="icon">x</span>Close</button>
+      </div>
+      <div class="modal-body">
+        <textarea class="codebox" id="dataBox" spellcheck="false"></textarea>
+        <div class="toolbar">
+          <button class="btn" id="copyData"><span class="icon">cp</span>Copy JSON</button>
+          <button class="btn primary" id="applyImport"><span class="icon">-></span>Apply import</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const periods = {
+      week: ['W02', 'W04', 'W06', 'W08', 'W10', 'W12'],
+      month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+      quarter: ['Q1', 'Q2', 'Q3', 'Q4', 'Q1 27', 'Q2 27'],
+      half: ['H1 2026', 'H2 2026', 'H1 2027', 'H2 2027', 'H1 2028', 'H2 2028']
+    };
+
+    let items = [
+      { id: 'RD-103', title: 'Segmented customer feedback portal', lane: 'Growth', owner: 'Maya', status: 'Committed', priority: 'P0', confidence: 82, start: '2026-01', end: '2026-03', dependency: 'Auth roles', notes: 'Expose public voting, private admin triage, and CSV feedback export.' },
+      { id: 'RD-118', title: 'Scenario planning overlays', lane: 'Core Product', owner: 'Jon', status: 'Discovery', priority: 'P1', confidence: 61, start: '2026-02', end: '2026-04', dependency: 'Capacity model', notes: 'Compare committed plan against stretch and conservative versions.' },
+      { id: 'RD-124', title: 'SAML and SCIM provisioning', lane: 'Enterprise', owner: 'Priya', status: 'At risk', priority: 'P0', confidence: 47, start: '2026-02', end: '2026-05', dependency: 'Identity vendor review', notes: 'Needed before two enterprise pilots can move from trial to paid.' },
+      { id: 'RD-132', title: 'Import mapper for CSV and Jira', lane: 'Platform', owner: 'Theo', status: 'Committed', priority: 'P1', confidence: 76, start: '2026-03', end: '2026-04', dependency: 'Field schema', notes: 'Map external fields into roadmap columns with saved presets.' },
+      { id: 'RD-141', title: 'Board-to-timeline conversion', lane: 'Core Product', owner: 'Nina', status: 'Committed', priority: 'P1', confidence: 70, start: '2026-04', end: '2026-06', dependency: 'Timeline renderer', notes: 'Convert Now/Next/Later plans into dated timeline ranges.' },
+      { id: 'RD-149', title: 'Executive presentation mode', lane: 'Growth', owner: 'Maya', status: 'Discovery', priority: 'P2', confidence: 58, start: '2026-05', end: '2026-06', dependency: 'Share links', notes: 'Read-only board optimized for roadmap reviews and customer calls.' },
+      { id: 'RD-155', title: 'Audit log for roadmap changes', lane: 'Enterprise', owner: 'Priya', status: 'Committed', priority: 'P1', confidence: 80, start: '2026-04', end: '2026-06', dependency: 'Workspace events', notes: 'Track item changes, imports, exports, and permission updates.' },
+      { id: 'RD-162', title: 'Saved filters and views', lane: 'Platform', owner: 'Theo', status: 'Shipped', priority: 'P2', confidence: 91, start: '2026-01', end: '2026-02', dependency: 'None', notes: 'Persist user-specific filters for lane, owner, status, and period mode.' }
+    ];
+
+    const lanes = ['Growth', 'Core Product', 'Enterprise', 'Platform'];
+    let selectedId = 'RD-103';
+    let sortKey = 'start';
+    let sortDir = 1;
+
+    const el = (id) => document.getElementById(id);
+    const statusClass = (status) => status === 'Committed' ? 'green' : status === 'At risk' ? 'danger' : status === 'Discovery' ? 'info' : 'warn';
+    const priorityRank = (p) => ({ P0: 0, P1: 1, P2: 2 }[p] ?? 3);
+
+    function monthIndex(value) {
+      const [year, month] = value.split('-').map(Number);
+      return (year - 2026) * 12 + month - 1;
+    }
+
+    function getFilteredItems() {
+      const q = el('search').value.trim().toLowerCase();
+      const lane = el('laneFilter').value;
+      const status = el('statusFilter').value;
+      return items.filter((item) => {
+        const haystack = Object.values(item).join(' ').toLowerCase();
+        return (!q || haystack.includes(q)) &&
+          (lane === 'all' || item.lane === lane) &&
+          (status === 'all' || item.status === status);
+      }).sort((a, b) => {
+        let av = a[sortKey];
+        let bv = b[sortKey];
+        if (sortKey === 'priority') { av = priorityRank(av); bv = priorityRank(bv); }
+        if (sortKey === 'confidence') { av = Number(av); bv = Number(bv); }
+        return av > bv ? sortDir : av < bv ? -sortDir : 0;
+      });
+    }
+
+    function renderRoadmap() {
+      const mode = el('periodMode').value;
+      const activePeriods = periods[mode];
+      const filtered = getFilteredItems();
+      el('visibleCount').textContent = `${filtered.length} visible`;
+      el('timelineLabel').textContent = `${mode[0].toUpperCase() + mode.slice(1)} view / ${activePeriods.join(' / ')}`;
+
+      const roadmap = el('roadmap');
+      roadmap.innerHTML = '';
+      roadmap.appendChild(cell('time-cell', 'Swimlane'));
+      activePeriods.forEach((period) => roadmap.appendChild(cell('time-cell', period)));
+
+      lanes.forEach((laneName) => {
+        const laneItems = filtered.filter((item) => item.lane === laneName);
+        const label = document.createElement('div');
+        label.className = 'lane-label';
+        label.innerHTML = `<strong>${laneName}</strong><span>${laneItems.length} items</span>`;
+        roadmap.appendChild(label);
+
+        activePeriods.forEach((_, index) => {
+          const laneCell = document.createElement('div');
+          laneCell.className = 'lane-cell';
+          const cellItems = laneItems.filter((item) => {
+            const start = Math.max(0, monthIndex(item.start));
+            const end = Math.min(5, monthIndex(item.end));
+            if (mode === 'quarter') return Math.floor(start / 3) <= index && Math.floor(end / 3) >= index;
+            if (mode === 'half') return Math.floor(start / 6) <= index && Math.floor(end / 6) >= index;
+            if (mode === 'week') return Math.floor(start * 2) <= index && Math.floor(end * 2) >= index;
+            return start <= index && end >= index;
+          });
+          cellItems.slice(0, 2).forEach((item, offset) => {
+            const start = Math.max(0, monthIndex(item.start));
+            const end = Math.min(5, monthIndex(item.end));
+            const startsHere = mode === 'month' ? start === index : offset === 0;
+            if (!startsHere && mode === 'month') return;
+            const card = document.createElement('button');
+            card.className = 'roadmap-card';
+            card.style.setProperty('--span', mode === 'month' ? Math.max(1, end - start + 1) : 1);
+            card.style.insetBlockStart = `${9 + offset * 48}px`;
+            card.innerHTML = `<div class="card-row"><span class="pill ${statusClass(item.status)}">${item.status}</span><span class="num">${item.id}</span></div><strong>${item.title}</strong><div class="card-row"><span class="meta">${item.owner}</span><span class="pill">${item.priority}</span></div>`;
+            card.addEventListener('click', () => selectItem(item.id));
+            laneCell.appendChild(card);
+          });
+          roadmap.appendChild(laneCell);
+        });
+      });
+    }
+
+    function cell(className, text) {
+      const node = document.createElement('div');
+      node.className = className;
+      node.textContent = text;
+      return node;
+    }
+
+    function renderTable() {
+      const rows = el('itemRows');
+      rows.innerHTML = '';
+      getFilteredItems().forEach((item) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="num">${item.id}</td>
+          <td><button class="btn ghost" style="min-height: 0; padding: 0; border: 0;" data-id="${item.id}">${item.title}</button></td>
+          <td>${item.lane}</td>
+          <td>${item.owner}</td>
+          <td><span class="pill ${statusClass(item.status)}">${item.status}</span></td>
+          <td><span class="pill">${item.priority}</span></td>
+          <td class="num">${item.confidence}%</td>
+          <td class="num">${item.start}</td>
+          <td class="num">${item.end}</td>
+          <td>${item.dependency}</td>`;
+        rows.appendChild(tr);
+      });
+      rows.querySelectorAll('[data-id]').forEach((button) => button.addEventListener('click', () => selectItem(button.dataset.id)));
+    }
+
+    function selectItem(id) {
+      selectedId = id;
+      const item = items.find((entry) => entry.id === id) || items[0];
+      el('editingId').textContent = item.id;
+      el('itemTitle').value = item.title;
+      el('itemLane').value = item.lane;
+      el('itemStatus').value = item.status;
+      el('itemOwner').value = item.owner;
+      el('itemPriority').value = item.priority;
+      el('itemStart').value = item.start;
+      el('itemEnd').value = item.end;
+      el('itemNotes').value = item.notes;
+    }
+
+    function render() {
+      renderRoadmap();
+      renderTable();
+      selectItem(selectedId);
+    }
+
+    function openModal(mode) {
+      el('modalTitle').textContent = mode === 'import' ? 'Import roadmap data' : 'Export roadmap data';
+      el('applyImport').style.display = mode === 'import' ? 'inline-flex' : 'none';
+      el('dataBox').value = JSON.stringify({ name: 'Platform roadmap', period: el('periodMode').value, items }, null, 2);
+      el('dataModal').classList.add('open');
+      el('dataModal').setAttribute('aria-hidden', 'false');
+    }
+
+    ['search', 'periodMode', 'laneFilter', 'statusFilter', 'sortBy'].forEach((id) => {
+      el(id).addEventListener('input', () => {
+        if (id === 'sortBy') sortKey = el('sortBy').value;
+        renderRoadmap();
+        renderTable();
+      });
+    });
+
+    document.querySelectorAll('[data-sort]').forEach((button) => {
+      button.addEventListener('click', () => {
+        sortDir = sortKey === button.dataset.sort ? sortDir * -1 : 1;
+        sortKey = button.dataset.sort;
+        el('sortBy').value = ['start', 'priority', 'confidence', 'owner'].includes(sortKey) ? sortKey : el('sortBy').value;
+        renderTable();
+      });
+    });
+
+    document.querySelectorAll('[data-density]').forEach((button) => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('[data-density]').forEach((b) => b.classList.remove('active'));
+        button.classList.add('active');
+        document.querySelectorAll('.lane-cell, .lane-label').forEach((node) => {
+          node.style.minHeight = button.dataset.density === 'relaxed' ? '136px' : '104px';
+        });
+      });
+    });
+
+    el('itemForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const item = items.find((entry) => entry.id === selectedId);
+      if (!item) return;
+      Object.assign(item, {
+        title: el('itemTitle').value,
+        lane: el('itemLane').value,
+        status: el('itemStatus').value,
+        owner: el('itemOwner').value,
+        priority: el('itemPriority').value,
+        start: el('itemStart').value,
+        end: el('itemEnd').value,
+        notes: el('itemNotes').value
+      });
+      el('saveState').textContent = 'Unsaved local edits';
+      renderRoadmap();
+      renderTable();
+    });
+
+    el('newItemBtn').addEventListener('click', () => {
+      const next = items.length + 171;
+      const item = { id: `RD-${next}`, title: 'New roadmap item', lane: 'Core Product', owner: 'Unassigned', status: 'Discovery', priority: 'P2', confidence: 50, start: '2026-05', end: '2026-06', dependency: 'None', notes: 'Describe the outcome, target user, and launch criteria.' };
+      items.push(item);
+      selectedId = item.id;
+      render();
+    });
+
+    el('saveBtn').addEventListener('click', () => {
+      localStorage.setItem('roadplane-demo', JSON.stringify(items));
+      el('saveState').textContent = 'Saved just now';
+    });
+    el('loginBtn').addEventListener('click', () => {
+      const loggedIn = el('accountName').textContent !== 'Not signed in';
+      el('accountName').textContent = loggedIn ? 'Not signed in' : 'Alex Jensen';
+      el('avatar').textContent = loggedIn ? '--' : 'AJ';
+      el('loginText').textContent = loggedIn ? 'Sign in to save' : 'Switch account';
+      el('saveState').textContent = loggedIn ? 'Local roadmap only' : 'Saved 2 min ago';
+    });
+    el('importBtn').addEventListener('click', () => openModal('import'));
+    el('exportBtn').addEventListener('click', () => openModal('export'));
+    el('closeModal').addEventListener('click', () => el('dataModal').classList.remove('open'));
+    el('copyData').addEventListener('click', async () => {
+      el('dataBox').select();
+      try { await navigator.clipboard.writeText(el('dataBox').value); } catch (error) { document.execCommand('copy'); }
+    });
+    el('applyImport').addEventListener('click', () => {
+      try {
+        const payload = JSON.parse(el('dataBox').value);
+        if (Array.isArray(payload.items)) {
+          items = payload.items;
+          selectedId = items[0]?.id || '';
+          el('dataModal').classList.remove('open');
+          render();
+        }
+      } catch (error) {
+        el('dataBox').value = `${el('dataBox').value}\n\nImport error: JSON must include an items array.`;
+      }
+    });
+    el('clearFilters').addEventListener('click', () => {
+      el('search').value = '';
+      el('laneFilter').value = 'all';
+      el('statusFilter').value = 'all';
+      sortKey = 'start';
+      renderRoadmap();
+      renderTable();
+    });
+
+    const saved = localStorage.getItem('roadplane-demo');
+    if (saved) {
+      try { items = JSON.parse(saved); } catch (error) {}
+    }
+    render();
+  </script>
+</body>
+</html>
