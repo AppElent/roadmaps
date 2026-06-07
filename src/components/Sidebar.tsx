@@ -1,6 +1,6 @@
 import { UserButton } from "@clerk/clerk-react";
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Map } from "lucide-react";
+import { LayoutDashboard, Map as MapIcon } from "lucide-react";
 
 export function Sidebar() {
 	return (
@@ -22,7 +22,7 @@ export function Sidebar() {
 			<div className="mt-auto flex items-center gap-2 px-1">
 				<UserButton />
 				<span className="font-mono text-xs text-neutral-500">Account</span>
-				<Map size={14} className="ml-auto text-neutral-300" />
+				<MapIcon size={14} className="ml-auto text-neutral-300" />
 			</div>
 		</aside>
 	);
