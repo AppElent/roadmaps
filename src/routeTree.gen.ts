@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as ShareTokenRouteImport } from './routes/share/$token'
 import { Route as RoadmapsIdRouteImport } from './routes/roadmaps/$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/dashboard/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShareTokenRoute = ShareTokenRouteImport.update({
+  id: '/share/$token',
+  path: '/share/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RoadmapsIdRoute = RoadmapsIdRouteImport.update({
   id: '/roadmaps/$id',
   path: '/roadmaps/$id',
@@ -32,30 +38,34 @@ const RoadmapsIdRoute = RoadmapsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/roadmaps/$id': typeof RoadmapsIdRoute
+  '/share/$token': typeof ShareTokenRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/roadmaps/$id': typeof RoadmapsIdRoute
+  '/share/$token': typeof ShareTokenRoute
   '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/roadmaps/$id': typeof RoadmapsIdRoute
+  '/share/$token': typeof ShareTokenRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/roadmaps/$id' | '/dashboard/'
+  fullPaths: '/' | '/roadmaps/$id' | '/share/$token' | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/roadmaps/$id' | '/dashboard'
-  id: '__root__' | '/' | '/roadmaps/$id' | '/dashboard/'
+  to: '/' | '/roadmaps/$id' | '/share/$token' | '/dashboard'
+  id: '__root__' | '/' | '/roadmaps/$id' | '/share/$token' | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RoadmapsIdRoute: typeof RoadmapsIdRoute
+  ShareTokenRoute: typeof ShareTokenRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/share/$token': {
+      id: '/share/$token'
+      path: '/share/$token'
+      fullPath: '/share/$token'
+      preLoaderRoute: typeof ShareTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/roadmaps/$id': {
       id: '/roadmaps/$id'
       path: '/roadmaps/$id'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RoadmapsIdRoute: RoadmapsIdRoute,
+  ShareTokenRoute: ShareTokenRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
 export const routeTree = rootRouteImport
