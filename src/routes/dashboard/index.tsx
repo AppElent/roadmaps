@@ -23,9 +23,7 @@ function DashboardPage() {
 			<div className="mx-auto max-w-5xl p-6">
 				<header className="mb-6 flex items-center justify-between">
 					<div>
-						<p className="font-mono text-xs uppercase tracking-wide text-neutral-500">
-							Workspace
-						</p>
+						<p className="rm-label">Workspace</p>
 						<h1 className="text-2xl font-semibold">Your roadmaps</h1>
 					</div>
 					<CreateRoadmapDialog

@@ -97,7 +97,7 @@ export function MilestoneManager({
 								setName("");
 								setDate("");
 							}}
-							className="flex items-center gap-1 rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white"
+							className="flex items-center gap-1 rm-btn-primary"
 						>
 							<Plus size={14} /> Add
 						</button>

@@ -85,7 +85,7 @@ export function ImportExportDialog({
 							<button
 								type="button"
 								onClick={runImport}
-								className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white"
+								className="rm-btn-primary"
 							>
 								Import as new roadmap
 							</button>

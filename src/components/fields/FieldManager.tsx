@@ -179,11 +179,7 @@ export function FieldManager({
 								</option>
 							))}
 						</select>
-						<button
-							type="button"
-							onClick={addField}
-							className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white"
-						>
+						<button type="button" onClick={addField} className="rm-btn-primary">
 							Add
 						</button>
 					</div>

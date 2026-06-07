@@ -74,9 +74,7 @@ function RoadmapEditor() {
 			<div className="p-6">
 				<header className="mb-4 flex flex-wrap items-center justify-between gap-2">
 					<div>
-						<p className="font-mono text-xs uppercase tracking-wide text-neutral-500">
-							Roadmap
-						</p>
+						<p className="rm-label">Roadmap</p>
 						<h1 className="text-2xl font-semibold">{bundle.roadmap.name}</h1>
 					</div>
 					<div className="flex flex-wrap items-center gap-2">
@@ -144,7 +142,7 @@ function RoadmapEditor() {
 						<button
 							type="button"
 							onClick={() => setEditing("new")}
-							className="rounded-md bg-neutral-900 px-3 py-2 text-sm text-white"
+							className="rm-btn-primary"
 						>
 							New item
 						</button>

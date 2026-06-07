@@ -217,11 +217,7 @@ export function ItemEditorPanel({
 				) : (
 					<span />
 				)}
-				<button
-					type="button"
-					onClick={save}
-					className="rounded-md bg-neutral-900 px-3 py-2 text-sm text-white"
-				>
+				<button type="button" onClick={save} className="rm-btn-primary">
 					{item ? "Save" : "Create"}
 				</button>
 			</div>

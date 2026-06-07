@@ -18,9 +18,7 @@ export function ReadOnlyRoadmap({ bundle }: { bundle: TimelineBundle }) {
 		<div className="mx-auto max-w-6xl p-6">
 			<header className="mb-4 flex items-center justify-between">
 				<div>
-					<p className="font-mono text-xs uppercase tracking-wide text-neutral-500">
-						Shared roadmap (read-only)
-					</p>
+					<p className="rm-label">Shared roadmap (read-only)</p>
 					<h1 className="text-2xl font-semibold">{bundle.roadmap.name}</h1>
 				</div>
 				<div className="flex items-center gap-2">

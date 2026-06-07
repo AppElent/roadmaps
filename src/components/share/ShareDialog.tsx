@@ -64,7 +64,7 @@ export function ShareDialog({
 							onClick={() =>
 								enableShare({ roadmapId: roadmap._id as Id<"roadmaps"> })
 							}
-							className="mt-4 rounded-md bg-neutral-900 px-3 py-2 text-sm text-white"
+							className="mt-4 rm-btn-primary"
 						>
 							Create share link
 						</button>
