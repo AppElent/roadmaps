@@ -48,7 +48,7 @@ function DashboardPage() {
 							<RoadmapCard
 								key={r._id}
 								name={r.name}
-								itemCount={0}
+								itemCount={r.itemCount}
 								updatedLabel={new Date(r._creationTime).toLocaleDateString()}
 								onOpen={() =>
 									navigate({ to: "/roadmaps/$id", params: { id: r._id } })

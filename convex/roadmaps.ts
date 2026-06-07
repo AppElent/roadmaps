@@ -42,12 +42,21 @@ export const list = query({
 	args: {},
 	handler: async (ctx) => {
 		const userId = await requireUser(ctx);
-		return await ctx.db
+		const roadmaps = await ctx.db
 			.query("roadmaps")
 			.withIndex("by_user_archived", (q) =>
 				q.eq("userId", userId).eq("archived", false),
 			)
 			.collect();
+		return await Promise.all(
+			roadmaps.map(async (roadmap) => {
+				const items = await ctx.db
+					.query("items")
+					.withIndex("by_roadmap", (q) => q.eq("roadmapId", roadmap._id))
+					.collect();
+				return { ...roadmap, itemCount: items.length };
+			}),
+		);
 	},
 });
 
