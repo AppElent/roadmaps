@@ -13,11 +13,13 @@ function App() {
 		<main className="grid min-h-screen place-items-center p-6">
 			<div className="max-w-md text-center">
 				<div className="mx-auto mb-4 grid size-10 place-items-center rounded-lg border border-neutral-900 font-mono text-sm font-bold">
-					RM
+					AS
 				</div>
-				<h1 className="mb-2 text-3xl font-semibold tracking-tight">Roadmaps</h1>
+				<h1 className="mb-2 text-3xl font-semibold tracking-tight">
+					ArchStudio
+				</h1>
 				<p className="mb-6 text-sm text-neutral-500">
-					Plan initiatives across lanes and timeframes, in real time.
+					The architect's workbench — roadmaps, diagrams, and more in one place.
 				</p>
 
 				<SignedOut>
