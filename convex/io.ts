@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation } from "./_generated/server";
-import { requireUser } from "./lib/auth";
+import { requireRoadmapOwner } from "./lib/auth";
+import { loadRoadmapChildren } from "./lib/bundle";
 import {
 	fieldOptionValidator,
 	fieldTypeValidator,
@@ -9,64 +10,75 @@ import {
 	zoomValidator,
 } from "./schema";
 
-export const importRoadmap = mutation({
-	args: {
-		payload: v.object({
+const importPayloadValidator = v.object({
+	name: v.string(),
+	startDate: v.number(),
+	endDate: v.number(),
+	defaultZoom: zoomValidator,
+	colorByFieldKey: v.optional(v.string()),
+	fields: v.array(
+		v.object({
+			key: v.string(),
+			label: v.string(),
+			type: fieldTypeValidator,
+			options: v.optional(v.array(fieldOptionValidator)),
+			order: v.number(),
+			showInTable: v.boolean(),
+			isSystem: v.optional(v.boolean()),
+		}),
+	),
+	lanes: v.array(
+		v.object({
 			name: v.string(),
+			color: v.optional(v.string()),
+			order: v.number(),
+			isDefault: v.optional(v.boolean()),
+		}),
+	),
+	items: v.array(
+		v.object({
+			title: v.string(),
+			laneIndex: v.number(),
 			startDate: v.number(),
 			endDate: v.number(),
-			defaultZoom: zoomValidator,
-			colorByFieldKey: v.optional(v.string()),
-			fields: v.array(
-				v.object({
-					key: v.string(),
-					label: v.string(),
-					type: fieldTypeValidator,
-					options: v.optional(v.array(fieldOptionValidator)),
-					order: v.number(),
-					showInTable: v.boolean(),
-					isSystem: v.optional(v.boolean()),
-				}),
-			),
-			lanes: v.array(
-				v.object({
-					name: v.string(),
-					color: v.optional(v.string()),
-					order: v.number(),
-					isDefault: v.optional(v.boolean()),
-				}),
-			),
-			items: v.array(
-				v.object({
-					title: v.string(),
-					laneIndex: v.number(),
-					startDate: v.number(),
-					endDate: v.number(),
-					description: v.optional(v.string()),
-					values: v.record(v.string(), fieldValueValidator),
-					order: v.number(),
-				}),
-			),
-			milestones: v.array(
-				v.object({
-					name: v.string(),
-					date: v.number(),
-					color: v.optional(v.string()),
-				}),
-			),
+			description: v.optional(v.string()),
+			values: v.record(v.string(), fieldValueValidator),
+			order: v.number(),
 		}),
+	),
+	milestones: v.array(
+		v.object({
+			name: v.string(),
+			date: v.number(),
+			color: v.optional(v.string()),
+		}),
+	),
+});
+
+export const replaceRoadmap = mutation({
+	args: {
+		roadmapId: v.id("roadmaps"),
+		payload: importPayloadValidator,
 	},
-	handler: async (ctx, { payload }) => {
-		const userId = await requireUser(ctx);
-		const roadmapId = await ctx.db.insert("roadmaps", {
-			userId,
+	handler: async (ctx, { roadmapId, payload }) => {
+		const { userId } = await requireRoadmapOwner(ctx, roadmapId);
+
+		const existing = await loadRoadmapChildren(ctx, roadmapId);
+		for (const row of [
+			...existing.fields,
+			...existing.lanes,
+			...existing.items,
+			...existing.milestones,
+		]) {
+			await ctx.db.delete(row._id);
+		}
+
+		await ctx.db.patch(roadmapId, {
 			name: payload.name,
 			startDate: payload.startDate,
 			endDate: payload.endDate,
 			defaultZoom: payload.defaultZoom,
 			colorByFieldKey: payload.colorByFieldKey,
-			visibility: "private",
-			archived: false,
 		});
 
 		for (const f of payload.fields) {
@@ -108,7 +120,5 @@ export const importRoadmap = mutation({
 		for (const m of payload.milestones) {
 			await ctx.db.insert("milestones", { roadmapId, userId, ...m });
 		}
-
-		return roadmapId;
 	},
 });

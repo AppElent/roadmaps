@@ -7,6 +7,7 @@
   },
   "scripts": {
     "dev": "vite dev --port 3000 --host",
+    "dev:all": "npx convex dev --once && npm run dev",
     "generate-routes": "tsr generate",
     "build": "vite build",
     "preview": "vite preview",

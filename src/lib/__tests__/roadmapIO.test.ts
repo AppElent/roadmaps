@@ -78,5 +78,17 @@ test("parseImport accepts serialized output and rejects junk", () => {
 	const parsed = parseImport(json);
 	expect(parsed.name).toBe("R");
 	expect(() => parseImport('{"nope":true}')).toThrow();
-	expect(() => parseImport("not json")).toThrow();
+	expect(() => parseImport("not json")).toThrow("Invalid JSON");
+});
+
+test("parseImport reports friendly errors", () => {
+	const valid = serializeRoadmap(bundle);
+	const { name: _name, ...missingName } = valid;
+	expect(() => parseImport(JSON.stringify(missingName))).toThrow(
+		/Missing required field: name/,
+	);
+	const wrongType = { ...valid, startDate: "soon" };
+	expect(() => parseImport(JSON.stringify(wrongType))).toThrow(
+		/Wrong type for startDate/,
+	);
 });

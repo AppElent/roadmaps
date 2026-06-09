@@ -107,6 +107,27 @@ export function serializeRoadmap(bundle: TimelineBundle): RoadmapExport {
 	};
 }
 
+function formatIssues(error: z.ZodError): string {
+	const lines = error.issues.slice(0, 3).map((issue) => {
+		const path = issue.path.length
+			? issue.path.map(String).join(".")
+			: "(root)";
+		if (issue.code === "invalid_type") {
+			if (/received undefined/i.test(issue.message)) {
+				return `Missing required field: ${path}`;
+			}
+			const detail = issue.message.replace(/^Invalid input:\s*/i, "");
+			return `Wrong type for ${path}: ${detail}`;
+		}
+		return `${path}: ${issue.message}`;
+	});
+	const extra = error.issues.length - lines.length;
+	if (extra > 0) {
+		lines.push(`…and ${extra} more issue${extra === 1 ? "" : "s"}`);
+	}
+	return lines.join("\n");
+}
+
 export function parseImport(text: string): RoadmapExport {
 	let raw: unknown;
 	try {
@@ -114,5 +135,9 @@ export function parseImport(text: string): RoadmapExport {
 	} catch {
 		throw new Error("Invalid JSON");
 	}
-	return roadmapExportSchema.parse(raw);
+	const result = roadmapExportSchema.safeParse(raw);
+	if (!result.success) {
+		throw new Error(formatIssues(result.error));
+	}
+	return result.data;
 }

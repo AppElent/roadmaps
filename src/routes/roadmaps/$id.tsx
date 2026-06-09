@@ -137,7 +137,7 @@ function RoadmapEditor() {
 							className={toolbarBtn}
 							onClick={() => setIoOpen(true)}
 						>
-							Import/Export
+							Edit JSON data
 						</button>
 						<button
 							type="button"
