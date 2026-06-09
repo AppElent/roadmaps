@@ -1,66 +1,42 @@
-import { api } from "@convex/_generated/api";
-import type { Id } from "@convex/_generated/dataModel";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQuery } from "convex/react";
+import { Map as MapIcon, Workflow } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { CreateRoadmapDialog } from "@/components/roadmaps/CreateRoadmapDialog";
-import { RoadmapCard } from "@/components/roadmaps/RoadmapCard";
+import { ToolCard } from "@/components/ToolCard";
 
 export const Route = createFileRoute("/dashboard/")({
 	ssr: false,
-	component: DashboardPage,
+	component: HomePage,
 });
 
-function DashboardPage() {
+function HomePage() {
 	const navigate = useNavigate();
-	const roadmaps = useQuery(api.roadmaps.list);
-	const create = useMutation(api.roadmaps.create);
-	const duplicate = useMutation(api.roadmaps.duplicate);
-	const archive = useMutation(api.roadmaps.archive);
 
 	return (
 		<AppShell>
 			<div className="mx-auto max-w-5xl p-6">
-				<header className="mb-6 flex items-center justify-between">
-					<div>
-						<p className="rm-label">Workspace</p>
-						<h1 className="text-2xl font-semibold">Your roadmaps</h1>
-					</div>
-					<CreateRoadmapDialog
-						onCreate={async (input) => {
-							const id = await create(input);
-							await navigate({ to: "/roadmaps/$id", params: { id } });
-						}}
-					/>
+				<header className="mb-6">
+					<p className="rm-label">Workspace</p>
+					<h1 className="text-2xl font-semibold">ArchStudio</h1>
+					<p className="mt-1 text-sm text-neutral-500">
+						The architect's workbench. Pick a tool to get started.
+					</p>
 				</header>
 
-				{roadmaps === undefined ? (
-					<p className="text-sm text-neutral-500">Loading…</p>
-				) : roadmaps.length === 0 ? (
-					<p className="text-sm text-neutral-500">
-						No roadmaps yet. Create your first one.
-					</p>
-				) : (
-					<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-						{roadmaps.map((r) => (
-							<RoadmapCard
-								key={r._id}
-								name={r.name}
-								itemCount={r.itemCount}
-								updatedLabel={new Date(r._creationTime).toLocaleDateString()}
-								onOpen={() =>
-									navigate({ to: "/roadmaps/$id", params: { id: r._id } })
-								}
-								onDuplicate={async () => {
-									await duplicate({ roadmapId: r._id as Id<"roadmaps"> });
-								}}
-								onArchive={async () => {
-									await archive({ roadmapId: r._id, archived: true });
-								}}
-							/>
-						))}
-					</div>
-				)}
+				<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+					<ToolCard
+						title="Roadmaps"
+						description="Plan initiatives across lanes and timeframes, in real time."
+						icon={MapIcon}
+						status="active"
+						onOpen={() => navigate({ to: "/roadmaps" })}
+					/>
+					<ToolCard
+						title="Diagrams"
+						description="Live Mermaid and PlantUML editing."
+						icon={Workflow}
+						status="soon"
+					/>
+				</div>
 			</div>
 		</AppShell>
 	);

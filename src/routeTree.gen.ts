@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RoadmapsIndexRouteImport } from './routes/roadmaps/index'
+import { Route as DiagramsIndexRouteImport } from './routes/diagrams/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as ShareTokenRouteImport } from './routes/share/$token'
 import { Route as RoadmapsIdRouteImport } from './routes/roadmaps/$id'
@@ -17,6 +19,16 @@ import { Route as RoadmapsIdRouteImport } from './routes/roadmaps/$id'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoadmapsIndexRoute = RoadmapsIndexRouteImport.update({
+  id: '/roadmaps/',
+  path: '/roadmaps/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiagramsIndexRoute = DiagramsIndexRouteImport.update({
+  id: '/diagrams/',
+  path: '/diagrams/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
@@ -40,12 +52,16 @@ export interface FileRoutesByFullPath {
   '/roadmaps/$id': typeof RoadmapsIdRoute
   '/share/$token': typeof ShareTokenRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/diagrams/': typeof DiagramsIndexRoute
+  '/roadmaps/': typeof RoadmapsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/roadmaps/$id': typeof RoadmapsIdRoute
   '/share/$token': typeof ShareTokenRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/diagrams': typeof DiagramsIndexRoute
+  '/roadmaps': typeof RoadmapsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +69,34 @@ export interface FileRoutesById {
   '/roadmaps/$id': typeof RoadmapsIdRoute
   '/share/$token': typeof ShareTokenRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/diagrams/': typeof DiagramsIndexRoute
+  '/roadmaps/': typeof RoadmapsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/roadmaps/$id' | '/share/$token' | '/dashboard/'
+  fullPaths:
+    | '/'
+    | '/roadmaps/$id'
+    | '/share/$token'
+    | '/dashboard/'
+    | '/diagrams/'
+    | '/roadmaps/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/roadmaps/$id' | '/share/$token' | '/dashboard'
-  id: '__root__' | '/' | '/roadmaps/$id' | '/share/$token' | '/dashboard/'
+  to:
+    | '/'
+    | '/roadmaps/$id'
+    | '/share/$token'
+    | '/dashboard'
+    | '/diagrams'
+    | '/roadmaps'
+  id:
+    | '__root__'
+    | '/'
+    | '/roadmaps/$id'
+    | '/share/$token'
+    | '/dashboard/'
+    | '/diagrams/'
+    | '/roadmaps/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +104,8 @@ export interface RootRouteChildren {
   RoadmapsIdRoute: typeof RoadmapsIdRoute
   ShareTokenRoute: typeof ShareTokenRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DiagramsIndexRoute: typeof DiagramsIndexRoute
+  RoadmapsIndexRoute: typeof RoadmapsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -76,6 +115,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roadmaps/': {
+      id: '/roadmaps/'
+      path: '/roadmaps'
+      fullPath: '/roadmaps/'
+      preLoaderRoute: typeof RoadmapsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagrams/': {
+      id: '/diagrams/'
+      path: '/diagrams'
+      fullPath: '/diagrams/'
+      preLoaderRoute: typeof DiagramsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
@@ -107,6 +160,8 @@ const rootRouteChildren: RootRouteChildren = {
   RoadmapsIdRoute: RoadmapsIdRoute,
   ShareTokenRoute: ShareTokenRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  DiagramsIndexRoute: DiagramsIndexRoute,
+  RoadmapsIndexRoute: RoadmapsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
