@@ -1,11 +1,24 @@
 import type { Doc } from "@convex/_generated/dataModel";
 import { z } from "zod";
 import type { TimelineBundle } from "@/components/timeline/TimelineView";
+import { dateInputToMs, msToDateInput } from "@/lib/fields";
 
 const optionSchema = z.object({
 	id: z.string(),
 	label: z.string(),
 	color: z.string(),
+});
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Accepts a "yyyy-MM-dd" string (new) or epoch ms (legacy); always yields ms. */
+const dateField = z.union([z.string(), z.number()]).transform((val, ctx) => {
+	if (typeof val === "number") return val;
+	if (!DATE_RE.test(val)) {
+		ctx.addIssue({ code: "custom", message: "Expected date as YYYY-MM-DD" });
+		return z.NEVER;
+	}
+	return dateInputToMs(val);
 });
 
 const valueSchema = z.union([
@@ -18,8 +31,8 @@ const valueSchema = z.union([
 export const roadmapExportSchema = z.object({
 	version: z.literal(1),
 	name: z.string(),
-	startDate: z.number(),
-	endDate: z.number(),
+	startDate: dateField,
+	endDate: dateField,
 	defaultZoom: z.enum(["week", "month", "quarter", "half"]),
 	colorByFieldKey: z.string().optional(),
 	fields: z.array(
@@ -45,8 +58,8 @@ export const roadmapExportSchema = z.object({
 		z.object({
 			title: z.string(),
 			laneIndex: z.number(),
-			startDate: z.number(),
-			endDate: z.number(),
+			startDate: dateField,
+			endDate: dateField,
 			description: z.string().optional(),
 			values: z.record(z.string(), valueSchema),
 			order: z.number(),
@@ -55,7 +68,7 @@ export const roadmapExportSchema = z.object({
 	milestones: z.array(
 		z.object({
 			name: z.string(),
-			date: z.number(),
+			date: dateField,
 			color: z.string().optional(),
 		}),
 	),
@@ -63,16 +76,31 @@ export const roadmapExportSchema = z.object({
 
 export type RoadmapExport = z.infer<typeof roadmapExportSchema>;
 
-export function serializeRoadmap(bundle: TimelineBundle): RoadmapExport {
+export function serializeRoadmap(
+	bundle: TimelineBundle,
+): z.input<typeof roadmapExportSchema> {
 	const laneIndex = new Map<Doc<"lanes">["_id"], number>();
 	bundle.lanes.forEach((lane, i) => {
 		laneIndex.set(lane._id, i);
 	});
+	const dateKeys = new Set(
+		bundle.fields.filter((f) => f.type === "date").map((f) => f.key),
+	);
+	const serializeValues = (values: Doc<"items">["values"]) => {
+		const out: Record<string, string | number | string[] | null> = {};
+		for (const [key, value] of Object.entries(values)) {
+			out[key] =
+				dateKeys.has(key) && typeof value === "number"
+					? msToDateInput(value)
+					: value;
+		}
+		return out;
+	};
 	return {
 		version: 1,
 		name: bundle.roadmap.name,
-		startDate: bundle.roadmap.startDate,
-		endDate: bundle.roadmap.endDate,
+		startDate: msToDateInput(bundle.roadmap.startDate),
+		endDate: msToDateInput(bundle.roadmap.endDate),
 		defaultZoom: bundle.roadmap.defaultZoom,
 		colorByFieldKey: bundle.roadmap.colorByFieldKey,
 		fields: bundle.fields.map((f) => ({
@@ -93,15 +121,15 @@ export function serializeRoadmap(bundle: TimelineBundle): RoadmapExport {
 		items: bundle.items.map((it) => ({
 			title: it.title,
 			laneIndex: laneIndex.get(it.laneId) ?? 0,
-			startDate: it.startDate,
-			endDate: it.endDate,
+			startDate: msToDateInput(it.startDate),
+			endDate: msToDateInput(it.endDate),
 			description: it.description,
-			values: it.values,
+			values: serializeValues(it.values),
 			order: it.order,
 		})),
 		milestones: bundle.milestones.map((m) => ({
 			name: m.name,
-			date: m.date,
+			date: msToDateInput(m.date),
 			color: m.color,
 		})),
 	};
@@ -139,5 +167,18 @@ export function parseImport(text: string): RoadmapExport {
 	if (!result.success) {
 		throw new Error(formatIssues(result.error));
 	}
-	return result.data;
+	const data = result.data;
+	const dateKeys = new Set(
+		data.fields.filter((f) => f.type === "date").map((f) => f.key),
+	);
+	if (dateKeys.size > 0) {
+		for (const item of data.items) {
+			for (const [key, value] of Object.entries(item.values)) {
+				if (dateKeys.has(key) && typeof value === "string") {
+					item.values[key] = dateInputToMs(value);
+				}
+			}
+		}
+	}
+	return data;
 }

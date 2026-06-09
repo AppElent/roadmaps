@@ -87,8 +87,58 @@ test("parseImport reports friendly errors", () => {
 	expect(() => parseImport(JSON.stringify(missingName))).toThrow(
 		/Missing required field: name/,
 	);
-	const wrongType = { ...valid, startDate: "soon" };
-	expect(() => parseImport(JSON.stringify(wrongType))).toThrow(
-		/Wrong type for startDate/,
+	const badDate = { ...valid, startDate: "soon" };
+	expect(() => parseImport(JSON.stringify(badDate))).toThrow(
+		/Expected date as YYYY-MM-DD/,
 	);
+	const wrongType = {
+		...valid,
+		lanes: valid.lanes.map((l) => ({ ...l, order: "first" })),
+	};
+	expect(() => parseImport(JSON.stringify(wrongType))).toThrow(
+		/Wrong type for/,
+	);
+});
+
+test("serializeRoadmap emits dates as YYYY-MM-DD strings", () => {
+	const out = serializeRoadmap(bundle);
+	expect(out.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+	expect(out.endDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+	expect(out.items[0].startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+});
+
+test("date-typed field values round-trip string <-> ms", () => {
+	const dueMs = new Date(2026, 5, 9).getTime();
+	const dated = {
+		...bundle,
+		fields: [
+			...bundle.fields,
+			{
+				_id: "f2",
+				_creationTime: 0,
+				roadmapId: "r1",
+				userId: "u",
+				key: "due",
+				label: "Due",
+				type: "date",
+				order: 1,
+				showInTable: true,
+			},
+		] as unknown as (typeof bundle)["fields"],
+		items: [
+			{ ...bundle.items[0], values: { status: "planned", due: dueMs } },
+		] as unknown as (typeof bundle)["items"],
+	};
+	const out = serializeRoadmap(dated);
+	expect(out.items[0].values.due).toBe("2026-06-09");
+	const parsed = parseImport(JSON.stringify(out));
+	expect(parsed.items[0].values.due).toBe(dueMs);
+});
+
+test("parseImport accepts legacy numeric dates", () => {
+	const out = serializeRoadmap(bundle);
+	const legacy = { ...out, startDate: 0, endDate: 1000 };
+	const parsed = parseImport(JSON.stringify(legacy));
+	expect(parsed.startDate).toBe(0);
+	expect(parsed.endDate).toBe(1000);
 });
