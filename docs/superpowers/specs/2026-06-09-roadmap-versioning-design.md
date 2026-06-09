@@ -16,6 +16,10 @@ into a versioned payload, and `io.replaceRoadmap` (`convex/io.ts`) restores a ro
 that payload (delete children → patch roadmap → re-insert). Versioning is a thin table + UI on top
 of this proven snapshot/restore path.
 
+> **Naming:** the table is `roadmapVersions` and the Convex module is `convex/roadmapVersions.ts`
+> (not a bare `versions`) so future per-entity version tables — e.g. diagram versions — get their
+> own clearly-scoped names rather than colliding in the shared schema namespace.
+
 ## Decisions
 
 - **Model:** Manual named checkpoints (not an automatic per-change undo log).
@@ -30,10 +34,10 @@ of this proven snapshot/restore path.
 
 ## Architecture
 
-### Data model — new `versions` table (`convex/schema.ts`)
+### Data model — new `roadmapVersions` table (`convex/schema.ts`)
 
 ```
-versions: defineTable({
+roadmapVersions: defineTable({
   roadmapId: v.id("roadmaps"),
   userId:    v.string(),
   label:     v.string(),                          // "Q1 plan" / "Before JSON import" / "Before restore"
@@ -57,10 +61,10 @@ Extract the snapshot/restore logic so JSON import and versioning share one code 
 - `applySnapshot(ctx, roadmapId, userId, snapshot)` → the delete-children + patch-roadmap +
   re-insert logic **currently inlined in `replaceRoadmap`** (`convex/io.ts:63-123`), moved here
   unchanged (including the lane-index remap and the "default lane when empty" fallback).
-- `saveVersion(ctx, roadmapId, userId, label, kind)` → `snapshotRoadmap` + insert a `versions`
+- `saveVersion(ctx, roadmapId, userId, label, kind)` → `snapshotRoadmap` + insert a `roadmapVersions`
   row + **prune to cap 25** (query `by_roadmap`, delete oldest by `_creationTime` until count ≤ 25).
 
-### Backend functions — new `convex/versions.ts`
+### Backend functions — new `convex/roadmapVersions.ts`
 
 - `list({ roadmapId })` **query** — `requireRoadmapOwner`; returns version **metadata only**
   (`_id`, `label`, `kind`, `_creationTime`), newest-first. Omits the heavy `snapshot` blob.
@@ -75,7 +79,7 @@ Extract the snapshot/restore logic so JSON import and versioning share one code 
 the imported payload, then delegates the apply to the shared `applySnapshot`. This is what makes a
 bad JSON edit recoverable.
 
-`convex/roadmaps.getBundle` is **not** modified — versions load via `versions.list` only when the
+`convex/roadmaps.getBundle` is **not** modified — versions load via `roadmapVersions.list` only when the
 dialog opens.
 
 ## UX
@@ -85,12 +89,12 @@ dialog opens.
   as the other managers).
 - **`VersionManager` dialog** (`src/components/versions/VersionManager.tsx`) — `radix-ui` `Dialog`,
   styled like `LaneManager`/`FieldManager`:
-  - **Top:** label input + **"Save current version"** button → `versions.create`.
-  - **List:** newest-first from `versions.list`; each row shows the **label**, a **kind badge**
+  - **Top:** label input + **"Save current version"** button → `roadmapVersions.create`.
+  - **List:** newest-first from `roadmapVersions.list`; each row shows the **label**, a **kind badge**
     (`Manual` solid vs `Auto` muted/outline), a **relative timestamp** (date-fns
     `formatDistanceToNow`), and a **Restore** button.
   - **Restore:** confirm prompt — "This replaces the current roadmap. A safety checkpoint of the
-    current state will be saved first." → `versions.restore`. The live bundle subscription updates
+    current state will be saved first." → `roadmapVersions.restore`. The live bundle subscription updates
     the timeline/table in real time.
   - **Empty state:** "No versions yet. Save one to create a restore point."
 - **Out of scope (YAGNI):** no manual delete button (cap-25 auto-prune bounds the list), no
@@ -98,7 +102,7 @@ dialog opens.
 
 ## Testing
 
-- **`convex/versions.test.ts`** (`convex-test` pattern, `import.meta.glob("./**/*.ts")`):
+- **`convex/roadmapVersions.test.ts`** (`convex-test` pattern, `import.meta.glob("./**/*.ts")`):
   - `create` inserts a `manual` version capturing current state.
   - `restore` first creates an `auto` "Before restore" version, then reproduces the snapshot's
     lanes/items/fields/milestones (round-trip: snapshot → mutate → restore → equals original).
@@ -112,8 +116,8 @@ dialog opens.
 
 ## Files
 
-**New:** `convex/versions.ts`, `convex/lib/snapshot.ts`, `convex/versions.test.ts`,
+**New:** `convex/roadmapVersions.ts`, `convex/lib/snapshot.ts`, `convex/roadmapVersions.test.ts`,
 `src/components/versions/VersionManager.tsx`.
-**Modified:** `convex/schema.ts` (add `versions` table + `roadmapSnapshotValidator`), `convex/io.ts`
+**Modified:** `convex/schema.ts` (add `roadmapVersions` table + `roadmapSnapshotValidator`), `convex/io.ts`
 (move validator out, auto-checkpoint, delegate to `applySnapshot`), `src/routes/roadmaps/$id.tsx`
 (Versions button + dialog wiring).
