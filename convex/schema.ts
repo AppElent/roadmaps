@@ -29,6 +29,51 @@ export const fieldValueValidator = v.union(
 	v.null(),
 );
 
+export const roadmapSnapshotValidator = v.object({
+	name: v.string(),
+	startDate: v.number(),
+	endDate: v.number(),
+	defaultZoom: zoomValidator,
+	colorByFieldKey: v.optional(v.string()),
+	fields: v.array(
+		v.object({
+			key: v.string(),
+			label: v.string(),
+			type: fieldTypeValidator,
+			options: v.optional(v.array(fieldOptionValidator)),
+			order: v.number(),
+			showInTable: v.boolean(),
+			isSystem: v.optional(v.boolean()),
+		}),
+	),
+	lanes: v.array(
+		v.object({
+			name: v.string(),
+			color: v.optional(v.string()),
+			order: v.number(),
+			isDefault: v.optional(v.boolean()),
+		}),
+	),
+	items: v.array(
+		v.object({
+			title: v.string(),
+			laneIndex: v.number(),
+			startDate: v.number(),
+			endDate: v.number(),
+			description: v.optional(v.string()),
+			values: v.record(v.string(), fieldValueValidator),
+			order: v.number(),
+		}),
+	),
+	milestones: v.array(
+		v.object({
+			name: v.string(),
+			date: v.number(),
+			color: v.optional(v.string()),
+		}),
+	),
+});
+
 export default defineSchema({
 	roadmaps: defineTable({
 		userId: v.string(),
@@ -87,5 +132,13 @@ export default defineSchema({
 		name: v.string(),
 		date: v.number(),
 		color: v.optional(v.string()),
+	}).index("by_roadmap", ["roadmapId"]),
+
+	roadmapVersions: defineTable({
+		roadmapId: v.id("roadmaps"),
+		userId: v.string(),
+		label: v.string(),
+		kind: v.union(v.literal("manual"), v.literal("auto")),
+		snapshot: roadmapSnapshotValidator,
 	}).index("by_roadmap", ["roadmapId"]),
 });
