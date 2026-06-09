@@ -27,7 +27,12 @@ export function LaneRow({
 	axisWidth: number;
 	unitWidth: number;
 	onSelect?: (id: Doc<"items">["_id"]) => void;
-	onItemDrag?: (item: Doc<"items">, mode: DragMode, deltaX: number) => void;
+	onItemDrag?: (
+		item: Doc<"items">,
+		mode: DragMode,
+		deltaX: number,
+		clientY: number,
+	) => void;
 }) {
 	const depth = items.length ? Math.max(...rows) + 1 : 1;
 	const height = depth * (rowHeight + rowGap) + rowGap;
@@ -55,7 +60,8 @@ export function LaneRow({
 						onSelect={onSelect}
 						onDragCommit={
 							onItemDrag
-								? (mode, deltaX) => onItemDrag(item, mode, deltaX)
+								? (mode, deltaX, clientY) =>
+										onItemDrag(item, mode, deltaX, clientY)
 								: undefined
 						}
 					/>

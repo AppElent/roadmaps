@@ -1,11 +1,13 @@
 import type { Doc } from "@convex/_generated/dataModel";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { barColor } from "@/lib/roadmapColors";
 import {
 	buildPeriods,
 	type DragMode,
 	dateToX,
 	itemGeometry,
+	laneAtY,
+	laneLayout,
 	packLanes,
 	resolveDrag,
 	type Zoom,
@@ -40,9 +42,11 @@ export function TimelineView({
 		itemId: Doc<"items">["_id"],
 		startDate: number,
 		endDate: number,
+		laneId?: Doc<"lanes">["_id"],
 	) => void;
 }) {
 	const { roadmap, fields, lanes, items, milestones } = bundle;
+	const lanesRef = useRef<HTMLDivElement>(null);
 
 	const periods = useMemo(
 		() => buildPeriods(roadmap.startDate, roadmap.endDate, zoom),
@@ -52,14 +56,14 @@ export function TimelineView({
 	const windowStart = periods[0]?.start ?? roadmap.startDate;
 	const windowEnd = periods[periods.length - 1]?.end ?? roadmap.endDate;
 
-	const totalHeight = lanes.reduce((sum, lane) => {
-		const laneItems = items.filter((i) => i.laneId === lane._id);
-		const depth = laneItems.length ? Math.max(...packLanes(laneItems)) + 1 : 1;
-		return sum + depth * (ROW_HEIGHT + ROW_GAP) + ROW_GAP;
-	}, 0);
+	const layout = useMemo(
+		() => laneLayout(lanes, items, ROW_HEIGHT, ROW_GAP),
+		[lanes, items],
+	);
+	const totalHeight = layout.at(-1)?.bottom ?? 0;
 
 	const handleItemDrag = onItemDatesChange
-		? (item: Doc<"items">, mode: DragMode, deltaX: number) => {
+		? (item: Doc<"items">, mode: DragMode, deltaX: number, clientY: number) => {
 				const next = resolveDrag(
 					mode,
 					item,
@@ -69,7 +73,15 @@ export function TimelineView({
 					axisWidth,
 					zoom,
 				);
-				onItemDatesChange(item._id, next.startDate, next.endDate);
+				let laneId: Doc<"lanes">["_id"] | undefined;
+				if (mode === "move" && lanesRef.current) {
+					const top = lanesRef.current.getBoundingClientRect().top;
+					const target = laneAtY(layout, clientY - top);
+					if (target && target !== item.laneId) {
+						laneId = target as Doc<"lanes">["_id"];
+					}
+				}
+				onItemDatesChange(item._id, next.startDate, next.endDate, laneId);
 			}
 		: undefined;
 
@@ -81,7 +93,7 @@ export function TimelineView({
 					columnWidth={COLUMN_WIDTH}
 					labelWidth={LABEL_WIDTH}
 				/>
-				<div className="relative">
+				<div className="relative" ref={lanesRef}>
 					{lanes.map((lane) => {
 						const laneItems = items.filter((i) => i.laneId === lane._id);
 						const rows = packLanes(laneItems);

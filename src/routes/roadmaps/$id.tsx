@@ -1,7 +1,7 @@
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery } from "convex/react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { FieldManager } from "@/components/fields/FieldManager";
@@ -34,7 +34,11 @@ const toolbarBtn =
 function RoadmapEditor() {
 	const { id } = Route.useParams();
 	const roadmapId = id as Id<"roadmaps">;
-	const bundle = useQuery(api.roadmaps.getBundle, { roadmapId });
+	const { isAuthenticated } = useConvexAuth();
+	const bundle = useQuery(
+		api.roadmaps.getBundle,
+		isAuthenticated ? { roadmapId } : "skip",
+	);
 	const updateItem = useMutation(api.items.update);
 	const [zoom, setZoom] = useState<Zoom | null>(null);
 	const [view, setView] = useState<"timeline" | "table">("timeline");
@@ -163,8 +167,8 @@ function RoadmapEditor() {
 						bundle={visibleBundle}
 						zoom={activeZoom}
 						onSelectItem={(itemId) => setEditing(itemId)}
-						onItemDatesChange={(itemId, startDate, endDate) =>
-							updateItem({ itemId, startDate, endDate })
+						onItemDatesChange={(itemId, startDate, endDate, laneId) =>
+							updateItem({ itemId, startDate, endDate, laneId })
 						}
 					/>
 				) : (

@@ -46,6 +46,7 @@ Two layers in one repo:
 
 ## Conventions & gotchas
 
+- **Authed `useQuery` must gate on `useConvexAuth()`.** On a cold load (deep link / hard refresh), `ConvexProviderWithClerk` calls `client.setAuth(...)` only *after* Clerk's session resolves, but a `useQuery` at the top of the component fires immediately — so the first query goes out unauthenticated and `requireUser` throws "Not authenticated". `<SignedIn>` in `AppShell` doesn't help (the query runs above that gate). Gate every authed query with the `"skip"` sentinel until auth settles: `const { isAuthenticated } = useConvexAuth(); useQuery(api.x.y, isAuthenticated ? args : "skip")`. The `undefined` return covers the gap via the existing "Loading…" branch. The public share route is exempt (intentionally unauthenticated).
 - **Biome** (not ESLint/Prettier): **tab** indentation, **double** quotes. Run `npm run check` before every commit. `src/routeTree.gen.ts` and `src/styles.css` are lint-excluded — never add lint-disable comments there. `design files/**` is excluded too.
 - **Path aliases:** `@/*` and `#/*` → `src/`; `@convex/*` → `convex/`. Import generated types as `@convex/_generated/api` and `@convex/_generated/dataModel`.
 - **`convex/_generated/` and `src/routeTree.gen.ts` are auto-generated** — never edit by hand. They regenerate via `npx convex dev` and `npx tsr generate` (or `npm run dev`). Commit the regenerated output with the change that caused it.

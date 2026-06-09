@@ -162,6 +162,43 @@ export function resolveDrag(
 	return { startDate: item.startDate, endDate: end };
 }
 
+export interface LaneBound {
+	laneId: string;
+	top: number;
+	bottom: number;
+}
+
+/**
+ * Cumulative vertical bounds (top/bottom px) for each lane, in lane order.
+ * Mirrors the height math in `LaneRow`: a lane is as tall as its deepest
+ * `packLanes` row, with a minimum of one row.
+ */
+export function laneLayout(
+	lanes: Array<{ _id: string }>,
+	items: Array<{ laneId: string; startDate: number; endDate: number }>,
+	rowHeight: number,
+	rowGap: number,
+): LaneBound[] {
+	const bounds: LaneBound[] = [];
+	let top = 0;
+	for (const lane of lanes) {
+		const laneItems = items.filter((i) => i.laneId === lane._id);
+		const depth = laneItems.length ? Math.max(...packLanes(laneItems)) + 1 : 1;
+		const height = depth * (rowHeight + rowGap) + rowGap;
+		bounds.push({ laneId: lane._id, top, bottom: top + height });
+		top += height;
+	}
+	return bounds;
+}
+
+/** Returns the laneId whose vertical band contains `y`, or null if outside all lanes. */
+export function laneAtY(layout: LaneBound[], y: number): string | null {
+	for (const bound of layout) {
+		if (y >= bound.top && y < bound.bottom) return bound.laneId;
+	}
+	return null;
+}
+
 /** First-fit packing. Returns the sub-row index for each item, in input order. */
 export function packLanes(
 	items: Array<{ startDate: number; endDate: number }>,

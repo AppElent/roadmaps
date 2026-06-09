@@ -3,6 +3,8 @@ import {
 	buildPeriods,
 	dateToX,
 	itemGeometry,
+	laneAtY,
+	laneLayout,
 	packLanes,
 	resolveDrag,
 	snapDate,
@@ -77,6 +79,37 @@ test("packLanes stacks overlapping items, shares rows for disjoint ones", () => 
 		{ startDate: 10, endDate: 20 },
 	]);
 	expect(disjoint).toEqual([0, 0]);
+});
+
+test("laneLayout stacks lanes cumulatively, sizing by deepest packed row", () => {
+	const lanes = [{ _id: "a" }, { _id: "b" }, { _id: "c" }];
+	const items = [
+		// lane a: two overlapping items -> depth 2
+		{ laneId: "a", startDate: 0, endDate: 10 },
+		{ laneId: "a", startDate: 5, endDate: 15 },
+		// lane b: one item -> depth 1
+		{ laneId: "b", startDate: 0, endDate: 10 },
+		// lane c: empty -> depth 1
+	];
+	const layout = laneLayout(lanes, items, 36, 8);
+	// row unit = 36 + 8 = 44, gap = 8
+	expect(layout).toEqual([
+		{ laneId: "a", top: 0, bottom: 2 * 44 + 8 },
+		{ laneId: "b", top: 96, bottom: 96 + (44 + 8) },
+		{ laneId: "c", top: 148, bottom: 148 + (44 + 8) },
+	]);
+});
+
+test("laneAtY maps a y coordinate to the containing lane, null when outside", () => {
+	const layout = [
+		{ laneId: "a", top: 0, bottom: 96 },
+		{ laneId: "b", top: 96, bottom: 148 },
+	];
+	expect(laneAtY(layout, 10)).toBe("a");
+	expect(laneAtY(layout, 96)).toBe("b");
+	expect(laneAtY(layout, 147)).toBe("b");
+	expect(laneAtY(layout, -5)).toBeNull();
+	expect(laneAtY(layout, 148)).toBeNull();
 });
 
 test("resolveDrag move preserves duration and snaps start to a month", () => {

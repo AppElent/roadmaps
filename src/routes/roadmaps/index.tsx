@@ -1,7 +1,7 @@
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQuery } from "convex/react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { AppShell } from "@/components/AppShell";
 import { CreateRoadmapDialog } from "@/components/roadmaps/CreateRoadmapDialog";
 import { RoadmapCard } from "@/components/roadmaps/RoadmapCard";
@@ -13,7 +13,8 @@ export const Route = createFileRoute("/roadmaps/")({
 
 function RoadmapsPage() {
 	const navigate = useNavigate();
-	const roadmaps = useQuery(api.roadmaps.list);
+	const { isAuthenticated } = useConvexAuth();
+	const roadmaps = useQuery(api.roadmaps.list, isAuthenticated ? {} : "skip");
 	const create = useMutation(api.roadmaps.create);
 	const duplicate = useMutation(api.roadmaps.duplicate);
 	const archive = useMutation(api.roadmaps.archive);
