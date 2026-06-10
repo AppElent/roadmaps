@@ -17,6 +17,7 @@ export function LaneRow({
 	onSelect,
 	onItemDrag,
 	onItemDragMove,
+	onItemDragEnd,
 	previewGeometryFor,
 	onAddItem,
 	onAddItemAt,
@@ -40,6 +41,7 @@ export function LaneRow({
 		clientY: number,
 	) => void;
 	onItemDragMove?: (item: Doc<"items">, mode: DragMode, deltaX: number) => void;
+	onItemDragEnd?: () => void;
 	previewGeometryFor?: (
 		item: Doc<"items">,
 		mode: DragMode,
@@ -103,6 +105,7 @@ export function LaneRow({
 								? (mode, deltaX) => onItemDragMove(item, mode, deltaX)
 								: undefined
 						}
+						onDragEnd={onItemDragEnd}
 						previewGeometry={
 							previewGeometryFor
 								? (mode, deltaX) => previewGeometryFor(item, mode, deltaX)

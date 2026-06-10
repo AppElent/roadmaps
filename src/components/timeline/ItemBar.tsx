@@ -15,6 +15,7 @@ export function ItemBar({
 	onSelect,
 	onDragCommit,
 	onDragMove,
+	onDragEnd,
 	previewGeometry,
 }: {
 	item: Doc<"items">;
@@ -27,6 +28,7 @@ export function ItemBar({
 	onSelect?: (id: Doc<"items">["_id"]) => void;
 	onDragCommit?: (mode: DragMode, deltaX: number, clientY: number) => void;
 	onDragMove?: (mode: DragMode, deltaX: number) => void;
+	onDragEnd?: () => void;
 	previewGeometry?: (
 		mode: DragMode,
 		deltaX: number,
@@ -73,6 +75,7 @@ export function ItemBar({
 		setDragging(false);
 		setPreview(null);
 		setDy(0);
+		onDragEnd?.();
 		if (Math.abs(dx) < 3 && Math.abs(dyy) < 3) {
 			onSelect?.(item._id);
 			return;

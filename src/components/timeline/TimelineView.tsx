@@ -100,7 +100,8 @@ export function TimelineView({
 					zoom,
 				);
 				const edge = mode === "resize-end" ? next.endDate : next.startDate;
-				setGuideX(dateToX(edge, windowStart, windowEnd, axisWidth));
+				const x = dateToX(edge, windowStart, windowEnd, axisWidth);
+				setGuideX(Math.max(0, Math.min(axisWidth, x)));
 			}
 		: undefined;
 
@@ -163,6 +164,7 @@ export function TimelineView({
 								onSelect={onSelectItem}
 								onItemDrag={handleItemDrag}
 								onItemDragMove={handleItemDragMove}
+								onItemDragEnd={editable ? () => setGuideX(null) : undefined}
 								previewGeometryFor={previewGeometryFor}
 								onAddItem={
 									onAddItem ? (laneId) => onAddItem(laneId) : undefined
