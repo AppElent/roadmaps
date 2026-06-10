@@ -15,7 +15,9 @@
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "node --env-file=.env.deploy.prod scripts/deploy.mjs prod",
+    "deploy:dev": "node --env-file=.env.deploy.dev scripts/deploy.mjs dev",
+    "deploy:preview": "node --env-file=.env.deploy.preview scripts/deploy.mjs preview"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.61.3",

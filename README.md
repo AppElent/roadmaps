@@ -52,15 +52,47 @@ npm run check
 
 ## Deploy to Cloudflare Workers
 
-This project uses the Cloudflare Vite plugin (configured in `vite.config.ts`) and `wrangler.jsonc`:
+Each environment is a frontend **build** pointed at its own Convex backend, shipped to a
+differently-named Worker. `VITE_CONVEX_URL` and `VITE_CLERK_PUBLISHABLE_KEY` are baked in at
+build time — there are no runtime Worker secrets. The deploy scripts deploy **both layers**:
+`convex deploy` pushes the backend, then runs the build (injecting that backend's
+`VITE_CONVEX_URL`), then `wrangler` ships the Worker.
 
-1. Install Wrangler: `npm install -g wrangler`
-2. Authenticate: `wrangler login`
-3. Deploy: `npx wrangler deploy`
+| Command | Convex deploy | Cloudflare target |
+| --- | --- | --- |
+| `npm run deploy` | production deployment | Worker `archstudio` |
+| `npm run deploy:dev` | dev backend | Worker `archstudio-dev` (`wrangler deploy --env dev`) |
+| `npm run deploy:preview` | branch-named preview deployment | ephemeral preview URL (`wrangler versions upload`) |
 
-For production env vars, run `wrangler secret put MY_VAR` for each secret listed in `.env.example`. Public (non-secret) vars go in `wrangler.jsonc` under `vars`.
+Orchestration lives in [`scripts/deploy.mjs`](scripts/deploy.mjs); worker names are in
+`wrangler.jsonc`.
 
-KV, D1, R2, and Durable Object bindings are configured in `wrangler.jsonc` — see https://developers.cloudflare.com/workers/wrangler/configuration/.
+### Per-environment credentials
+
+Each command loads `.env.deploy.<env>` via Node's `--env-file`. Create one file per
+environment — `.env.deploy.prod`, `.env.deploy.dev`, `.env.deploy.preview` — they are
+**gitignored** (`.env.deploy.*`); never commit them. Each contains:
+
+```
+# Convex dashboard → Settings → Deploy Keys.
+# prod = production key, dev = dev backend key, preview = Preview Deploy Key.
+CONVEX_DEPLOY_KEY=
+# Clerk Publishable Key for this environment's Clerk instance.
+VITE_CLERK_PUBLISHABLE_KEY=
+# Optional — omit if you use interactive `wrangler login`.
+CLOUDFLARE_API_TOKEN=
+CLOUDFLARE_ACCOUNT_ID=
+```
+
+### One-time setup
+
+1. `wrangler login` (or set `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` in the deploy files).
+2. Create the **prod** Convex deployment and a separate **dev** Convex backend; generate a
+   Deploy Key for each. Generate a **Preview Deploy Key** for previews.
+3. On **each** Convex deployment, set `CLERK_JWT_ISSUER_DOMAIN` via `npx convex env set`. For
+   preview, set it as a default preview env var in the Convex dashboard so ephemeral previews
+   inherit it.
+4. Fill in each `.env.deploy.<env>` file (keys above).
 
 
 ## Setting up Clerk
