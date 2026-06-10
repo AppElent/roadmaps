@@ -165,9 +165,25 @@ test("yearBands groups consecutive periods by calendar year", () => {
 	]);
 });
 
-test("columnWidth returns a per-zoom width", () => {
-	expect(columnWidth("month")).toBeGreaterThan(0);
-	expect(columnWidth("week")).toBeGreaterThan(0);
-	expect(columnWidth("quarter")).toBeGreaterThan(0);
-	expect(columnWidth("half")).toBeGreaterThan(0);
+test("columnWidth returns the per-zoom width", () => {
+	expect(columnWidth("week")).toBe(104);
+	expect(columnWidth("month")).toBe(116);
+	expect(columnWidth("quarter")).toBe(96);
+	expect(columnWidth("half")).toBe(96);
+});
+
+test("resolveDrag at half zoom snaps to month boundaries", () => {
+	const ws = ms(2026, 0, 1);
+	const we = ms(2026, 11, 31);
+	const item = { startDate: ms(2026, 1, 10), endDate: ms(2026, 3, 10) };
+	const out = resolveDrag("resize-end", item, 200, ws, we, 1200, "half");
+	// snap unit for half zoom is "month": end lands on an end-of-month
+	const end = new Date(out.endDate);
+	const endOfThatMonth = new Date(
+		end.getFullYear(),
+		end.getMonth() + 1,
+		0,
+	).getDate();
+	expect(end.getDate()).toBe(endOfThatMonth);
+	expect(out.startDate).toBe(item.startDate);
 });

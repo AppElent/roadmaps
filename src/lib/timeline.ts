@@ -113,11 +113,18 @@ export function itemGeometry(
 
 export type SnapUnit = "day" | "week" | "month";
 
-/** The snap step one tier finer than the visible columns. */
+/** The snap step one tier finer than the visible columns: week→day, month→week, quarter/half→month. */
 export function snapGranularity(zoom: Zoom): SnapUnit {
-	if (zoom === "week") return "day";
-	if (zoom === "month") return "week";
-	return "month"; // quarter, half
+	switch (zoom) {
+		case "week":
+			return "day";
+		case "month":
+			return "week";
+		case "quarter":
+			return "month";
+		case "half":
+			return "month";
+	}
 }
 
 export function snapDate(
