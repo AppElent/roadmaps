@@ -26,6 +26,8 @@ function draftFromItem(
 	fields: Doc<"fields">[],
 	defaultLaneId: Id<"lanes">,
 	windowStart: number,
+	presetLaneId?: Id<"lanes">,
+	presetStartMs?: number,
 ): ItemDraft {
 	if (item) {
 		return {
@@ -40,11 +42,12 @@ function draftFromItem(
 	const values: Record<string, FieldValue> = {};
 	for (const f of fields) values[f.key] = emptyValue(f);
 	const day = 24 * 60 * 60 * 1000;
+	const startMs = presetStartMs ?? windowStart;
 	return {
 		title: "",
-		laneId: defaultLaneId,
-		startMs: windowStart,
-		endMs: windowStart + 30 * day,
+		laneId: presetLaneId ?? defaultLaneId,
+		startMs,
+		endMs: startMs + 30 * day,
 		description: "",
 		values,
 	};
@@ -56,6 +59,8 @@ export function ItemEditorPanel({
 	fields,
 	lanes,
 	windowStart,
+	presetLaneId,
+	presetStartMs,
 	onClose,
 }: {
 	roadmapId: Id<"roadmaps">;
@@ -63,20 +68,38 @@ export function ItemEditorPanel({
 	fields: Doc<"fields">[];
 	lanes: Doc<"lanes">[];
 	windowStart: number;
+	presetLaneId?: Id<"lanes">;
+	presetStartMs?: number;
 	onClose: () => void;
 }) {
 	const createItem = useMutation(api.items.create);
 	const updateItem = useMutation(api.items.update);
 	const removeItem = useMutation(api.items.remove);
 	const [draft, setDraft] = useState<ItemDraft>(() =>
-		draftFromItem(item, fields, lanes[0]._id, windowStart),
+		draftFromItem(
+			item,
+			fields,
+			lanes[0]._id,
+			windowStart,
+			presetLaneId,
+			presetStartMs,
+		),
 	);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		setDraft(draftFromItem(item, fields, lanes[0]._id, windowStart));
+		setDraft(
+			draftFromItem(
+				item,
+				fields,
+				lanes[0]._id,
+				windowStart,
+				presetLaneId,
+				presetStartMs,
+			),
+		);
 		setError(null);
-	}, [item, fields, lanes, windowStart]);
+	}, [item, fields, lanes, windowStart, presetLaneId, presetStartMs]);
 
 	async function save() {
 		setError(null);

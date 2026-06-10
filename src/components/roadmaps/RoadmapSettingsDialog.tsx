@@ -114,6 +114,22 @@ export function RoadmapSettingsDialog({
 							))}
 						</select>
 					</label>
+					<label className="block text-sm">
+						Bar color style
+						<select
+							className={base}
+							defaultValue={roadmap.barColorMode ?? "left"}
+							onChange={(e) =>
+								update({
+									roadmapId: roadmap._id,
+									barColorMode: e.target.value as "left" | "fill",
+								})
+							}
+						>
+							<option value="left">Left line</option>
+							<option value="fill">Fill bar</option>
+						</select>
+					</label>
 				</Dialog.Content>
 			</Dialog.Portal>
 		</Dialog.Root>

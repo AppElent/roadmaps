@@ -41,9 +41,14 @@ function RoadmapEditor() {
 		isAuthenticated ? { roadmapId } : "skip",
 	);
 	const updateItem = useMutation(api.items.update);
+	const createLane = useMutation(api.lanes.create);
 	const [zoom, setZoom] = useState<Zoom | null>(null);
 	const [view, setView] = useState<"timeline" | "table">("timeline");
-	const [editing, setEditing] = useState<"new" | Id<"items"> | null>(null);
+	const [editing, setEditing] = useState<Id<"items"> | null>(null);
+	const [newItem, setNewItem] = useState<null | {
+		laneId?: Id<"lanes">;
+		startMs?: number;
+	}>(null);
 	const [lanesOpen, setLanesOpen] = useState(false);
 	const [fieldsOpen, setFieldsOpen] = useState(false);
 	const [milestonesOpen, setMilestonesOpen] = useState(false);
@@ -68,17 +73,17 @@ function RoadmapEditor() {
 	}
 
 	const activeZoom: Zoom = zoom ?? bundle.roadmap.defaultZoom;
-	const editingItem =
-		editing && editing !== "new"
-			? (bundle.items.find((i) => i._id === editing) ?? null)
-			: null;
+	const editingItem = editing
+		? (bundle.items.find((i) => i._id === editing) ?? null)
+		: null;
+	const panelOpen = editing !== null || newItem !== null;
 	const visibleItems = sortItems(filterItems(bundle.items, filter), sort);
 	const visibleBundle = { ...bundle, items: visibleItems };
 
 	return (
 		<AppShell>
 			<div className="p-6">
-				<header className="mb-4 flex flex-wrap items-center justify-between gap-2">
+				<header className="mb-4 space-y-3">
 					<div>
 						<p className="rm-label">Roadmap</p>
 						<h1 className="text-2xl font-semibold">{bundle.roadmap.name}</h1>
@@ -154,7 +159,7 @@ function RoadmapEditor() {
 						</button>
 						<button
 							type="button"
-							onClick={() => setEditing("new")}
+							onClick={() => setNewItem({})}
 							className="rm-btn-primary"
 						>
 							New item
@@ -179,6 +184,8 @@ function RoadmapEditor() {
 						onItemDatesChange={(itemId, startDate, endDate, laneId) =>
 							updateItem({ itemId, startDate, endDate, laneId })
 						}
+						onAddItem={(laneId, startMs) => setNewItem({ laneId, startMs })}
+						onAddLane={(name) => createLane({ roadmapId, name })}
 					/>
 				) : (
 					<ItemTable
@@ -192,14 +199,19 @@ function RoadmapEditor() {
 				)}
 			</div>
 
-			{editing !== null ? (
+			{panelOpen ? (
 				<ItemEditorPanel
 					roadmapId={roadmapId}
 					item={editingItem}
 					fields={bundle.fields}
 					lanes={bundle.lanes}
 					windowStart={bundle.roadmap.startDate}
-					onClose={() => setEditing(null)}
+					presetLaneId={newItem?.laneId}
+					presetStartMs={newItem?.startMs}
+					onClose={() => {
+						setEditing(null);
+						setNewItem(null);
+					}}
 				/>
 			) : null}
 
