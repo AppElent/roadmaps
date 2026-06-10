@@ -15,6 +15,7 @@ import { ShareDialog } from "@/components/share/ShareDialog";
 import { ItemTable } from "@/components/table/ItemTable";
 import { TimelineView } from "@/components/timeline/TimelineView";
 import { ZoomSwitch } from "@/components/timeline/ZoomSwitch";
+import { VersionManager } from "@/components/versions/VersionManager";
 import {
 	filterItems,
 	type ItemFilter,
@@ -49,6 +50,7 @@ function RoadmapEditor() {
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [shareOpen, setShareOpen] = useState(false);
 	const [ioOpen, setIoOpen] = useState(false);
+	const [versionsOpen, setVersionsOpen] = useState(false);
 	const [filter, setFilter] = useState<ItemFilter>({
 		search: "",
 		laneId: "all",
@@ -145,6 +147,13 @@ function RoadmapEditor() {
 						</button>
 						<button
 							type="button"
+							className={toolbarBtn}
+							onClick={() => setVersionsOpen(true)}
+						>
+							Versions
+						</button>
+						<button
+							type="button"
 							onClick={() => setEditing("new")}
 							className="rm-btn-primary"
 						>
@@ -227,6 +236,11 @@ function RoadmapEditor() {
 				bundle={bundle}
 				open={ioOpen}
 				onOpenChange={setIoOpen}
+			/>
+			<VersionManager
+				roadmapId={roadmapId}
+				open={versionsOpen}
+				onOpenChange={setVersionsOpen}
 			/>
 		</AppShell>
 	);
