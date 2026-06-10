@@ -35,6 +35,7 @@ export const roadmapExportSchema = z.object({
 	endDate: dateField,
 	defaultZoom: z.enum(["week", "month", "quarter", "half"]),
 	colorByFieldKey: z.string().optional(),
+	barColorMode: z.enum(["left", "fill"]).optional(),
 	fields: z.array(
 		z.object({
 			key: z.string(),
@@ -103,6 +104,7 @@ export function serializeRoadmap(
 		endDate: msToDateInput(bundle.roadmap.endDate),
 		defaultZoom: bundle.roadmap.defaultZoom,
 		colorByFieldKey: bundle.roadmap.colorByFieldKey,
+		barColorMode: bundle.roadmap.barColorMode,
 		fields: bundle.fields.map((f) => ({
 			key: f.key,
 			label: f.label,

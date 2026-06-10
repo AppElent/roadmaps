@@ -1,6 +1,20 @@
 import type { Doc } from "@convex/_generated/dataModel";
 import { expect, test } from "vitest";
+import type { TimelineBundle } from "@/components/timeline/TimelineView";
 import { parseImport, serializeRoadmap } from "../roadmapIO";
+
+const baseRoadmap = {
+	_id: "rm1" as never,
+	_creationTime: 0,
+	userId: "u",
+	name: "RM",
+	startDate: 0,
+	endDate: 100,
+	defaultZoom: "month" as const,
+	visibility: "private" as const,
+	archived: false,
+	barColorMode: "fill" as const,
+};
 
 const bundle = {
 	roadmap: {
@@ -141,4 +155,17 @@ test("parseImport accepts legacy numeric dates", () => {
 	const parsed = parseImport(JSON.stringify(legacy));
 	expect(parsed.startDate).toBe(0);
 	expect(parsed.endDate).toBe(1000);
+});
+
+test("serializeRoadmap includes barColorMode and parseImport round-trips it", () => {
+	const bundle = {
+		roadmap: baseRoadmap,
+		fields: [],
+		lanes: [],
+		items: [],
+		milestones: [],
+	} as unknown as TimelineBundle;
+	const json = JSON.stringify(serializeRoadmap(bundle));
+	const parsed = parseImport(json);
+	expect(parsed.barColorMode).toBe("fill");
 });
