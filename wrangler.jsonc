@@ -5,6 +5,6 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
   "env": {
-    "dev": { "name": "archstudio-dev" }
+    "dev": { "name": "archstudio-dev", "workers_dev": true, }
   }
 }
