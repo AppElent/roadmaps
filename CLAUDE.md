@@ -40,7 +40,7 @@ Two layers in one repo:
 - `itemQuery.ts` — `filterItems` / `sortItems` (drive both timeline and table).
 - `roadmapIO.ts` — `serializeRoadmap` / `parseImport` (versioned JSON; items reference lanes by index).
 
-**Timeline rendering.** `TimelineView` is the orchestrator: it computes `axisWidth = periods.length × COLUMN_WIDTH`, maps the window onto it, packs lanes, and renders. Item dates are day-precision; the zoom level only changes gridlines/labels, not stored data. Drag/resize is optimistic-local during the gesture, committed once on pointer-up via `items.update`; `TimelineView` stays read-only when no `onItemDatesChange` is passed (that's how the share view reuses it).
+**Timeline rendering.** `TimelineView` is the orchestrator: it computes `axisWidth = periods.length × columnWidth(zoom)` (per-zoom column width from `timeline.ts`), maps the window onto it, packs lanes, and renders. Item dates are day-precision; the zoom level only changes gridlines/labels, not stored data. Drag/resize is optimistic-local during the gesture and snaps to an adaptive grid (`snapGranularity(zoom)`: one tier finer than the visible columns) with a live snapped preview + guide line, committed once on pointer-up via `items.update`; `TimelineView` stays read-only when no `onItemDatesChange` is passed (that's how the share view reuses it). Bars render as a colored left line by default, or a solid fill when `roadmap.barColorMode === "fill"`.
 
 **The editor route** `src/routes/roadmaps/$id.tsx` is the central orchestrator wiring the bundle to `TimelineView`/`ItemTable`, the slide-over `ItemEditorPanel`, and the manager dialogs (lanes/fields/milestones/settings/share/import-export). `AppShell` gates authed pages (`<SignedIn>` / `<RedirectToSignIn>`).
 
