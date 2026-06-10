@@ -1,5 +1,6 @@
 import type { Doc } from "@convex/_generated/dataModel";
 import { useRef, useState } from "react";
+import { readableTextOn } from "@/lib/roadmapColors";
 import type { DragMode } from "@/lib/timeline";
 import { cn } from "@/lib/utils";
 
@@ -9,24 +10,33 @@ export function ItemBar({
 	width,
 	top,
 	color,
+	colorMode,
 	unitWidth,
 	onSelect,
 	onDragCommit,
+	onDragMove,
+	previewGeometry,
 }: {
 	item: Doc<"items">;
 	left: number;
 	width: number;
 	top: number;
 	color: string;
+	colorMode: "left" | "fill";
 	unitWidth: number;
 	onSelect?: (id: Doc<"items">["_id"]) => void;
 	onDragCommit?: (mode: DragMode, deltaX: number, clientY: number) => void;
+	onDragMove?: (mode: DragMode, deltaX: number) => void;
+	previewGeometry?: (
+		mode: DragMode,
+		deltaX: number,
+	) => { left: number; width: number };
 }) {
-	const [offset, setOffset] = useState<{ dx: number; dw: number; dy: number }>({
-		dx: 0,
-		dw: 0,
-		dy: 0,
-	});
+	const [preview, setPreview] = useState<{
+		left: number;
+		width: number;
+	} | null>(null);
+	const [dy, setDy] = useState(0);
 	const [dragging, setDragging] = useState(false);
 	const drag = useRef<{
 		mode: DragMode;
@@ -34,6 +44,7 @@ export function ItemBar({
 		startY: number;
 	} | null>(null);
 	const editable = Boolean(onDragCommit);
+	const fill = colorMode === "fill";
 
 	function begin(mode: DragMode, e: React.PointerEvent) {
 		if (!editable) return;
@@ -47,27 +58,30 @@ export function ItemBar({
 	function move(e: React.PointerEvent) {
 		if (!drag.current) return;
 		const dx = e.clientX - drag.current.startX;
-		const dy = e.clientY - drag.current.startY;
-		if (drag.current.mode === "move") setOffset({ dx, dw: 0, dy });
-		else if (drag.current.mode === "resize-end")
-			setOffset({ dx: 0, dw: dx, dy: 0 });
-		else setOffset({ dx, dw: -dx, dy: 0 });
+		const mode = drag.current.mode;
+		setDy(mode === "move" ? e.clientY - drag.current.startY : 0);
+		if (previewGeometry) setPreview(previewGeometry(mode, dx));
+		onDragMove?.(mode, dx);
 	}
 
 	function end(e: React.PointerEvent) {
 		if (!drag.current) return;
 		const dx = e.clientX - drag.current.startX;
-		const dy = e.clientY - drag.current.startY;
+		const dyy = e.clientY - drag.current.startY;
 		const mode = drag.current.mode;
 		drag.current = null;
 		setDragging(false);
-		setOffset({ dx: 0, dw: 0, dy: 0 });
-		if (Math.abs(dx) < 3 && Math.abs(dy) < 3) {
+		setPreview(null);
+		setDy(0);
+		if (Math.abs(dx) < 3 && Math.abs(dyy) < 3) {
 			onSelect?.(item._id);
 			return;
 		}
 		onDragCommit?.(mode, dx, e.clientY);
 	}
+
+	const renderLeft = preview ? preview.left : left;
+	const renderWidth = Math.max(8, preview ? preview.width : width);
 
 	return (
 		// biome-ignore lint/a11y/useSemanticElements: a <button> can't legally contain the nested interactive resize handles; using role="button" with keyboard handlers instead
@@ -85,13 +99,23 @@ export function ItemBar({
 					onDragCommit?.("move", -unitWidth, Number.NaN);
 			}}
 			style={{
-				left: left + offset.dx,
-				width: Math.max(8, width + offset.dw),
-				top: top + offset.dy,
-				borderLeftColor: color,
+				left: renderLeft,
+				width: renderWidth,
+				top: top + dy,
+				...(fill
+					? {
+							backgroundColor: color,
+							color: readableTextOn(color),
+							borderColor: color,
+						}
+					: { borderLeftColor: color }),
 			}}
 			className={cn(
-				"group absolute flex h-9 cursor-grab items-center overflow-hidden rounded-md border border-l-4 border-neutral-200 bg-white px-2 text-left text-xs shadow-sm hover:border-neutral-400 active:cursor-grabbing",
+				"group absolute flex h-9 items-center overflow-hidden rounded-md border px-2 text-left text-xs shadow-sm",
+				fill ? "border" : "border-l-4 border-neutral-200 bg-white",
+				editable
+					? "cursor-grab hover:border-neutral-400 active:cursor-grabbing"
+					: "cursor-default",
 				dragging && "z-20 shadow-md",
 			)}
 		>
