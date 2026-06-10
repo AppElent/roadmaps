@@ -4,7 +4,7 @@ import { mutation, query } from "./_generated/server";
 import { requireRoadmapOwner, requireUser } from "./lib/auth";
 import { loadRoadmapChildren } from "./lib/bundle";
 import { DEFAULT_STATUS_OPTIONS, STATUS_FIELD_KEY } from "./lib/defaults";
-import { zoomValidator } from "./schema";
+import { barColorModeValidator, zoomValidator } from "./schema";
 
 export const list = query({
 	args: {},
@@ -96,6 +96,7 @@ export const update = mutation({
 		endDate: v.optional(v.number()),
 		defaultZoom: v.optional(zoomValidator),
 		colorByFieldKey: v.optional(v.string()),
+		barColorMode: v.optional(barColorModeValidator),
 	},
 	handler: async (ctx, args) => {
 		await requireRoadmapOwner(ctx, args.roadmapId);
@@ -149,6 +150,7 @@ export const duplicate = mutation({
 			endDate: roadmap.endDate,
 			defaultZoom: roadmap.defaultZoom,
 			colorByFieldKey: roadmap.colorByFieldKey,
+			barColorMode: roadmap.barColorMode,
 			visibility: "private",
 			archived: false,
 		});

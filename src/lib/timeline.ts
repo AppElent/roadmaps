@@ -2,12 +2,14 @@ import {
 	eachMonthOfInterval,
 	eachQuarterOfInterval,
 	eachWeekOfInterval,
+	endOfDay,
 	endOfMonth,
 	endOfQuarter,
 	endOfWeek,
 	format,
 	getISOWeek,
 	getQuarter,
+	startOfDay,
 	startOfMonth,
 	startOfQuarter,
 	startOfWeek,
@@ -69,7 +71,7 @@ export function buildPeriods(
 		periods.push({
 			start: s.getTime(),
 			end: e.getTime(),
-			label: `${s.getMonth() < 6 ? "H1" : "H2"} ${s.getFullYear()}`,
+			label: s.getMonth() < 6 ? "H1" : "H2",
 		});
 		cursor = new Date(e.getTime() + 1);
 	}
@@ -109,24 +111,37 @@ export function itemGeometry(
 	return { left, width: Math.max(8, right - left) };
 }
 
+export type SnapUnit = "day" | "week" | "month";
+
+/** The snap step one tier finer than the visible columns: week→day, month→week, quarter/half→month. */
+export function snapGranularity(zoom: Zoom): SnapUnit {
+	switch (zoom) {
+		case "week":
+			return "day";
+		case "month":
+			return "week";
+		case "quarter":
+			return "month";
+		case "half":
+			return "month";
+	}
+}
+
 export function snapDate(
 	date: number,
-	zoom: Zoom,
+	unit: SnapUnit,
 	edge: "start" | "end",
 ): number {
 	const d = new Date(date);
-	if (zoom === "month") {
-		return (edge === "start" ? startOfMonth(d) : endOfMonth(d)).getTime();
+	if (unit === "day") {
+		return (edge === "start" ? startOfDay(d) : endOfDay(d)).getTime();
 	}
-	if (zoom === "quarter") {
-		return (edge === "start" ? startOfQuarter(d) : endOfQuarter(d)).getTime();
-	}
-	if (zoom === "week") {
+	if (unit === "week") {
 		return (
 			edge === "start" ? startOfWeek(d, WEEK_OPTS) : endOfWeek(d, WEEK_OPTS)
 		).getTime();
 	}
-	return (edge === "start" ? startOfHalf(d) : endOfHalf(d)).getTime();
+	return (edge === "start" ? startOfMonth(d) : endOfMonth(d)).getTime();
 }
 
 export type DragMode = "move" | "resize-start" | "resize-end";
@@ -142,22 +157,23 @@ export function resolveDrag(
 ): { startDate: number; endDate: number } {
 	const span = windowEnd - windowStart || 1;
 	const deltaMs = (deltaX / (axisWidth || 1)) * span;
+	const unit = snapGranularity(zoom);
 
 	if (mode === "move") {
 		const duration = item.endDate - item.startDate;
-		const start = snapDate(item.startDate + deltaMs, zoom, "start");
+		const start = snapDate(item.startDate + deltaMs, unit, "start");
 		return { startDate: start, endDate: start + duration };
 	}
 	if (mode === "resize-start") {
-		let start = snapDate(item.startDate + deltaMs, zoom, "start");
+		let start = snapDate(item.startDate + deltaMs, unit, "start");
 		if (start >= item.endDate) {
-			start = snapDate(item.endDate - 1, zoom, "start");
+			start = snapDate(item.endDate - 1, unit, "start");
 		}
 		return { startDate: start, endDate: item.endDate };
 	}
-	let end = snapDate(item.endDate + deltaMs, zoom, "end");
+	let end = snapDate(item.endDate + deltaMs, unit, "end");
 	if (end <= item.startDate) {
-		end = snapDate(item.startDate + 1, zoom, "end");
+		end = snapDate(item.startDate + 1, unit, "end");
 	}
 	return { startDate: item.startDate, endDate: end };
 }
@@ -218,4 +234,32 @@ export function packLanes(
 		result[it.i] = row;
 	}
 	return result;
+}
+
+/** Consecutive periods grouped by calendar year, for the axis year band. */
+export function yearBands(
+	periods: Period[],
+): { label: string; columnSpan: number }[] {
+	const bands: { label: string; columnSpan: number }[] = [];
+	for (const p of periods) {
+		const label = String(new Date(p.start).getFullYear());
+		const last = bands[bands.length - 1];
+		if (last && last.label === label) last.columnSpan += 1;
+		else bands.push({ label, columnSpan: 1 });
+	}
+	return bands;
+}
+
+/** Per-zoom column width in px. Narrower than the old fixed 140 to reduce horizontal scroll. */
+export function columnWidth(zoom: Zoom): number {
+	switch (zoom) {
+		case "week":
+			return 104;
+		case "month":
+			return 116;
+		case "quarter":
+			return 96;
+		case "half":
+			return 96;
+	}
 }

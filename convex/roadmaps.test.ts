@@ -67,3 +67,19 @@ test("duplicate clones fields, lanes, and items", async () => {
 	expect(copy.items).toHaveLength(1);
 	expect(copy.items[0].title).toBe("Item A");
 });
+
+test("update sets barColorMode and getBundle returns it", async () => {
+	const t = convexTest(schema, modules);
+	const roadmapId = await t
+		.withIdentity({ subject: "user_bar" })
+		.mutation(api.roadmaps.create, { name: "Bars", startDate: 0, endDate: 100 });
+
+	await t
+		.withIdentity({ subject: "user_bar" })
+		.mutation(api.roadmaps.update, { roadmapId, barColorMode: "fill" });
+
+	const bundle = await t
+		.withIdentity({ subject: "user_bar" })
+		.query(api.roadmaps.getBundle, { roadmapId });
+	expect(bundle.roadmap.barColorMode).toBe("fill");
+});

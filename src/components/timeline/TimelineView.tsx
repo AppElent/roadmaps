@@ -1,8 +1,9 @@
 import type { Doc } from "@convex/_generated/dataModel";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { barColor } from "@/lib/roadmapColors";
 import {
 	buildPeriods,
+	columnWidth,
 	type DragMode,
 	dateToX,
 	itemGeometry,
@@ -10,13 +11,14 @@ import {
 	laneLayout,
 	packLanes,
 	resolveDrag,
+	xToDate,
 	type Zoom,
 } from "@/lib/timeline";
+import { AddLaneRow } from "./AddLaneRow";
 import { LaneRow } from "./LaneRow";
 import { MilestoneMarker } from "./MilestoneMarker";
 import { TimeAxis } from "./TimeAxis";
 
-export const COLUMN_WIDTH = 140;
 export const LABEL_WIDTH = 170;
 export const ROW_HEIGHT = 36;
 export const ROW_GAP = 8;
@@ -34,6 +36,8 @@ export function TimelineView({
 	zoom,
 	onSelectItem,
 	onItemDatesChange,
+	onAddItem,
+	onAddLane,
 }: {
 	bundle: TimelineBundle;
 	zoom: Zoom;
@@ -44,17 +48,22 @@ export function TimelineView({
 		endDate: number,
 		laneId?: Doc<"lanes">["_id"],
 	) => void;
+	onAddItem?: (laneId: Doc<"lanes">["_id"], startMs?: number) => void;
+	onAddLane?: (name: string) => void;
 }) {
 	const { roadmap, fields, lanes, items, milestones } = bundle;
 	const lanesRef = useRef<HTMLDivElement>(null);
+	const [guideX, setGuideX] = useState<number | null>(null);
 
+	const colW = columnWidth(zoom);
 	const periods = useMemo(
 		() => buildPeriods(roadmap.startDate, roadmap.endDate, zoom),
 		[roadmap.startDate, roadmap.endDate, zoom],
 	);
-	const axisWidth = periods.length * COLUMN_WIDTH;
+	const axisWidth = periods.length * colW;
 	const windowStart = periods[0]?.start ?? roadmap.startDate;
 	const windowEnd = periods[periods.length - 1]?.end ?? roadmap.endDate;
+	const colorMode = roadmap.barColorMode ?? "left";
 
 	const layout = useMemo(
 		() => laneLayout(lanes, items, ROW_HEIGHT, ROW_GAP),
@@ -62,8 +71,43 @@ export function TimelineView({
 	);
 	const totalHeight = layout.at(-1)?.bottom ?? 0;
 
+	const editable = Boolean(onItemDatesChange);
+
+	const previewGeometryFor = editable
+		? (item: Doc<"items">, mode: DragMode, deltaX: number) => {
+				const next = resolveDrag(
+					mode,
+					item,
+					deltaX,
+					windowStart,
+					windowEnd,
+					axisWidth,
+					zoom,
+				);
+				return itemGeometry(next, windowStart, windowEnd, axisWidth);
+			}
+		: undefined;
+
+	const handleItemDragMove = editable
+		? (item: Doc<"items">, mode: DragMode, deltaX: number) => {
+				const next = resolveDrag(
+					mode,
+					item,
+					deltaX,
+					windowStart,
+					windowEnd,
+					axisWidth,
+					zoom,
+				);
+				const edge = mode === "resize-end" ? next.endDate : next.startDate;
+				const x = dateToX(edge, windowStart, windowEnd, axisWidth);
+				setGuideX(Math.max(0, Math.min(axisWidth, x)));
+			}
+		: undefined;
+
 	const handleItemDrag = onItemDatesChange
 		? (item: Doc<"items">, mode: DragMode, deltaX: number, clientY: number) => {
+				setGuideX(null);
 				const next = resolveDrag(
 					mode,
 					item,
@@ -90,7 +134,7 @@ export function TimelineView({
 			<div style={{ width: LABEL_WIDTH + axisWidth }}>
 				<TimeAxis
 					periods={periods}
-					columnWidth={COLUMN_WIDTH}
+					columnWidth={colW}
 					labelWidth={LABEL_WIDTH}
 				/>
 				<div className="relative" ref={lanesRef}>
@@ -111,20 +155,45 @@ export function TimelineView({
 								rows={rows}
 								geometries={geometries}
 								colors={colors}
+								colorMode={colorMode}
 								rowHeight={ROW_HEIGHT}
 								rowGap={ROW_GAP}
 								labelWidth={LABEL_WIDTH}
 								axisWidth={axisWidth}
-								unitWidth={COLUMN_WIDTH}
+								unitWidth={colW}
 								onSelect={onSelectItem}
 								onItemDrag={handleItemDrag}
+								onItemDragMove={handleItemDragMove}
+								onItemDragEnd={editable ? () => setGuideX(null) : undefined}
+								previewGeometryFor={previewGeometryFor}
+								onAddItem={
+									onAddItem ? (laneId) => onAddItem(laneId) : undefined
+								}
+								onAddItemAt={
+									onAddItem
+										? (laneId, localX) =>
+												onAddItem(
+													laneId,
+													xToDate(localX, windowStart, windowEnd, axisWidth),
+												)
+										: undefined
+								}
 							/>
 						);
 					})}
+					{onAddLane ? (
+						<AddLaneRow labelWidth={LABEL_WIDTH} onAdd={onAddLane} />
+					) : null}
 					<div
 						className="pointer-events-none absolute top-0"
 						style={{ left: LABEL_WIDTH, width: axisWidth, height: totalHeight }}
 					>
+						{guideX !== null ? (
+							<div
+								className="absolute top-0 w-px bg-blue-500"
+								style={{ left: guideX, height: totalHeight }}
+							/>
+						) : null}
 						{milestones.map((m) => (
 							<MilestoneMarker
 								key={m._id}
