@@ -8,6 +8,11 @@ export const zoomValidator = v.union(
 	v.literal("half"),
 );
 
+export const barColorModeValidator = v.union(
+	v.literal("left"),
+	v.literal("fill"),
+);
+
 export const fieldTypeValidator = v.union(
 	v.literal("text"),
 	v.literal("number"),
@@ -35,6 +40,7 @@ export const roadmapSnapshotValidator = v.object({
 	endDate: v.number(),
 	defaultZoom: zoomValidator,
 	colorByFieldKey: v.optional(v.string()),
+	barColorMode: v.optional(barColorModeValidator),
 	fields: v.array(
 		v.object({
 			key: v.string(),
@@ -83,6 +89,7 @@ export default defineSchema({
 		endDate: v.number(),
 		defaultZoom: zoomValidator,
 		colorByFieldKey: v.optional(v.string()),
+		barColorMode: v.optional(barColorModeValidator),
 		visibility: v.union(v.literal("private"), v.literal("link")),
 		shareToken: v.optional(v.string()),
 		archived: v.boolean(),

@@ -27,6 +27,7 @@ export async function snapshotRoadmap(
 		endDate: roadmap.endDate,
 		defaultZoom: roadmap.defaultZoom,
 		colorByFieldKey: roadmap.colorByFieldKey,
+		barColorMode: roadmap.barColorMode,
 		fields: fields.map((f) => ({
 			key: f.key,
 			label: f.label,
@@ -82,6 +83,7 @@ export async function applySnapshot(
 		endDate: snapshot.endDate,
 		defaultZoom: snapshot.defaultZoom,
 		colorByFieldKey: snapshot.colorByFieldKey,
+		barColorMode: snapshot.barColorMode,
 	});
 
 	for (const f of snapshot.fields) {
