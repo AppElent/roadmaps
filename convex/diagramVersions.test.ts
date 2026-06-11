@@ -104,3 +104,19 @@ test("a non-owner cannot list, create or restore versions", async () => {
 		t.withIdentity(mallory).query(api.diagramVersions.list, { diagramId }),
 	).rejects.toThrow(/access denied/);
 });
+
+test("a non-owner cannot restore another user's version", async () => {
+	const t = convexTest(schema, modules);
+	const diagramId = await setupDiagram(t);
+	await t
+		.withIdentity(alex)
+		.mutation(api.diagramVersions.create, { diagramId, label: "Alex's" });
+	const list = await t
+		.withIdentity(alex)
+		.query(api.diagramVersions.list, { diagramId });
+	await expect(
+		t
+			.withIdentity(mallory)
+			.mutation(api.diagramVersions.restore, { versionId: list[0]._id }),
+	).rejects.toThrow(/access denied/);
+});
