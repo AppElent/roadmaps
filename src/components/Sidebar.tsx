@@ -24,9 +24,6 @@ export function Sidebar() {
 				</Link>
 				<Link to="/diagrams" className={navLinkClass}>
 					<Workflow size={16} /> Diagrams
-					<span className="ml-auto rounded-full border border-neutral-200 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-neutral-400">
-						Soon
-					</span>
 				</Link>
 			</nav>
 			<div className="mt-auto flex items-center gap-2 px-1">

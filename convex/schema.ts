@@ -80,6 +80,17 @@ export const roadmapSnapshotValidator = v.object({
 	),
 });
 
+export const diagramTypeValidator = v.union(
+	v.literal("mermaid"),
+	v.literal("plantuml"),
+);
+
+export const diagramSnapshotValidator = v.object({
+	title: v.string(),
+	type: diagramTypeValidator,
+	source: v.string(),
+});
+
 export default defineSchema({
 	roadmaps: defineTable({
 		userId: v.string(),
@@ -148,4 +159,24 @@ export default defineSchema({
 		kind: v.union(v.literal("manual"), v.literal("auto")),
 		snapshot: roadmapSnapshotValidator,
 	}).index("by_roadmap", ["roadmapId"]),
+
+	diagrams: defineTable({
+		userId: v.string(),
+		title: v.string(),
+		type: diagramTypeValidator,
+		source: v.string(),
+		visibility: v.union(v.literal("private"), v.literal("link")),
+		shareToken: v.optional(v.string()),
+		archived: v.boolean(),
+	})
+		.index("by_user", ["userId"])
+		.index("by_shareToken", ["shareToken"]),
+
+	diagramVersions: defineTable({
+		diagramId: v.id("diagrams"),
+		userId: v.string(),
+		label: v.string(),
+		kind: v.union(v.literal("manual"), v.literal("auto")),
+		snapshot: diagramSnapshotValidator,
+	}).index("by_diagram", ["diagramId"]),
 });

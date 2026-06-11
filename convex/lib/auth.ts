@@ -22,3 +22,16 @@ export async function requireRoadmapOwner(
 	}
 	return { userId, roadmap };
 }
+
+/** Verifies the caller owns the diagram; returns the user id and the diagram doc. */
+export async function requireDiagramOwner(
+	ctx: QueryCtx | MutationCtx,
+	diagramId: Id<"diagrams">,
+): Promise<{ userId: string; diagram: Doc<"diagrams"> }> {
+	const userId = await requireUser(ctx);
+	const diagram = await ctx.db.get(diagramId);
+	if (!diagram || diagram.userId !== userId) {
+		throw new Error("Diagram not found or access denied");
+	}
+	return { userId, diagram };
+}
