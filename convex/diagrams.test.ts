@@ -193,3 +193,18 @@ test("a non-owner cannot manage sharing", async () => {
 			.mutation(api.diagrams.regenerateShare, { diagramId }),
 	).rejects.toThrow(/access denied/);
 });
+
+test("remove deletes the diagram's versions too", async () => {
+	const t = convexTest(schema, modules);
+	const diagramId = await t
+		.withIdentity(alex)
+		.mutation(api.diagrams.create, { title: "Doomed", type: "mermaid" });
+	await t
+		.withIdentity(alex)
+		.mutation(api.diagramVersions.create, { diagramId, label: "v1" });
+	await t.withIdentity(alex).mutation(api.diagrams.remove, { diagramId });
+	const orphans = await t.run(async (ctx) => {
+		return await ctx.db.query("diagramVersions").collect();
+	});
+	expect(orphans).toHaveLength(0);
+});
