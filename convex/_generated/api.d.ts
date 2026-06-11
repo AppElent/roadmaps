@@ -19,6 +19,7 @@ import type * as lib_snapshot from "../lib/snapshot.js";
 import type * as milestones from "../milestones.js";
 import type * as roadmapVersions from "../roadmapVersions.js";
 import type * as roadmaps from "../roadmaps.js";
+import type * as seed from "../seed.js";
 import type * as sharing from "../sharing.js";
 import type * as users from "../users.js";
 
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   milestones: typeof milestones;
   roadmapVersions: typeof roadmapVersions;
   roadmaps: typeof roadmaps;
+  seed: typeof seed;
   sharing: typeof sharing;
   users: typeof users;
 }>;
