@@ -16,10 +16,10 @@
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check",
-    "deploy": "node --env-file=.env.deploy.prod scripts/deploy.mjs prod",
+    "deploy": "npm run deploy:prod",
     "deploy:dev": "npx convex dev --once && npm run build:development && wrangler deploy --env dev",
-    "deploy:prod": "npm run build && wrangler deploy",
-    "deploy:preview": "node --env-file=.env.deploy.preview scripts/deploy.mjs preview"
+    "deploy:prod": "npx convex deploy && npm run build && wrangler deploy",
+    "deploy:preview": "npx convex dev --once && npm run build:development && wrangler deploy --env preview"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.61.3",
