@@ -102,3 +102,74 @@ test("a non-owner cannot get, update or remove a diagram", async () => {
 		t.withIdentity(mallory).mutation(api.diagrams.remove, { diagramId }),
 	).rejects.toThrow(/access denied/);
 });
+
+test("enableShare issues a token honored by getPublicDiagram", async () => {
+	const t = convexTest(schema, modules);
+	const diagramId = await t.withIdentity(alex).mutation(api.diagrams.create, {
+		title: "Shared",
+		type: "mermaid",
+		source: "flowchart TD\n A --> B",
+	});
+	const token = await t
+		.withIdentity(alex)
+		.mutation(api.diagrams.enableShare, { diagramId });
+	expect(token).toBeTruthy();
+	const pub = await t.query(api.sharing.getPublicDiagram, {
+		shareToken: token,
+	});
+	expect(pub?.title).toBe("Shared");
+	expect(pub?.source).toBe("flowchart TD\n A --> B");
+});
+
+test("disableShare revokes public access", async () => {
+	const t = convexTest(schema, modules);
+	const diagramId = await t
+		.withIdentity(alex)
+		.mutation(api.diagrams.create, { title: "Shared", type: "mermaid" });
+	const token = await t
+		.withIdentity(alex)
+		.mutation(api.diagrams.enableShare, { diagramId });
+	await t.withIdentity(alex).mutation(api.diagrams.disableShare, { diagramId });
+	const pub = await t.query(api.sharing.getPublicDiagram, {
+		shareToken: token,
+	});
+	expect(pub).toBeNull();
+});
+
+test("regenerateShare invalidates the old token", async () => {
+	const t = convexTest(schema, modules);
+	const diagramId = await t
+		.withIdentity(alex)
+		.mutation(api.diagrams.create, { title: "Shared", type: "mermaid" });
+	const oldToken = await t
+		.withIdentity(alex)
+		.mutation(api.diagrams.enableShare, { diagramId });
+	const newToken = await t
+		.withIdentity(alex)
+		.mutation(api.diagrams.regenerateShare, { diagramId });
+	expect(newToken).not.toBe(oldToken);
+	expect(
+		await t.query(api.sharing.getPublicDiagram, { shareToken: oldToken }),
+	).toBeNull();
+	expect(
+		(await t.query(api.sharing.getPublicDiagram, { shareToken: newToken }))
+			?.title,
+	).toBe("Shared");
+});
+
+test("getPublicDiagram returns null for unknown tokens", async () => {
+	const t = convexTest(schema, modules);
+	expect(
+		await t.query(api.sharing.getPublicDiagram, { shareToken: "nope" }),
+	).toBeNull();
+});
+
+test("a non-owner cannot manage sharing", async () => {
+	const t = convexTest(schema, modules);
+	const diagramId = await t
+		.withIdentity(alex)
+		.mutation(api.diagrams.create, { title: "Private", type: "mermaid" });
+	await expect(
+		t.withIdentity(mallory).mutation(api.diagrams.enableShare, { diagramId }),
+	).rejects.toThrow(/access denied/);
+});

@@ -70,3 +70,40 @@ export const remove = mutation({
 		await ctx.db.delete(args.diagramId);
 	},
 });
+
+export const enableShare = mutation({
+	args: { diagramId: v.id("diagrams") },
+	handler: async (ctx, args) => {
+		const { diagram } = await requireDiagramOwner(ctx, args.diagramId);
+		const token = diagram.shareToken ?? crypto.randomUUID().replace(/-/g, "");
+		await ctx.db.patch(args.diagramId, {
+			visibility: "link",
+			shareToken: token,
+		});
+		return token;
+	},
+});
+
+export const disableShare = mutation({
+	args: { diagramId: v.id("diagrams") },
+	handler: async (ctx, args) => {
+		await requireDiagramOwner(ctx, args.diagramId);
+		await ctx.db.patch(args.diagramId, {
+			visibility: "private",
+			shareToken: undefined,
+		});
+	},
+});
+
+export const regenerateShare = mutation({
+	args: { diagramId: v.id("diagrams") },
+	handler: async (ctx, args) => {
+		const { diagram } = await requireDiagramOwner(ctx, args.diagramId);
+		if (diagram.visibility !== "link") {
+			throw new Error("Sharing is not enabled");
+		}
+		const token = crypto.randomUUID().replace(/-/g, "");
+		await ctx.db.patch(args.diagramId, { shareToken: token });
+		return token;
+	},
+});
