@@ -34,7 +34,8 @@ function HomePage() {
 						title="Diagrams"
 						description="Live Mermaid and PlantUML editing."
 						icon={Workflow}
-						status="soon"
+						status="active"
+						onOpen={() => navigate({ to: "/diagrams" })}
 					/>
 				</div>
 			</div>
