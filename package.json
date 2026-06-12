@@ -17,6 +17,7 @@
     "lint": "biome lint",
     "check": "biome check",
     "deploy": "npm run deploy:prod",
+    "seed": "npx convex run seed:seedDemo",
     "deploy:dev": "npx convex dev --once && npm run build:development && wrangler deploy --env dev",
     "deploy:prod": "npx convex deploy && npm run build && wrangler deploy",
     "deploy:preview": "npx convex dev --once && npm run build:development && wrangler deploy --env preview"
