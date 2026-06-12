@@ -1,328 +1,109 @@
-Welcome to your new TanStack Start app! 
+# ArchStudio
 
-# Getting Started
+The architect's workbench — roadmaps, diagrams, and more in one place.
 
-To run this application:
+ArchStudio is a real-time web app that hosts an architect's planning tools side by side.
+Sign in and pick a tool from the Home launcher; everything is real-time, owner-private, and
+shareable via read-only links.
+
+## Tools
+
+- **Roadmaps** — a real-time timeline planner. Lay out initiatives across lanes and
+  timeframes, drag and resize bars on a zoomable timeline, add per-roadmap custom fields,
+  sort them in a table, mark milestones, and share a read-only link. Import/export as JSON.
+- **Diagrams** — a live Mermaid + PlantUML editor. Type on the left, see the rendered diagram
+  on the right. Mermaid renders in the browser; PlantUML and other engines render via
+  [kroki.io](https://kroki.io). Manual version history and read-only share links included.
+- **AI helper** _(coming soon)_ — a Claude-powered assistant that will dock into the editors
+  to draft diagrams and summarize roadmaps.
+
+## Tech stack
+
+- **Frontend:** React 19 + [TanStack React Start](https://tanstack.com/start) (SSR,
+  file-based routing), deployed as a Cloudflare Worker.
+- **Backend:** [Convex](https://convex.dev) — serverless, real-time queries and mutations.
+- **Auth:** [Clerk](https://clerk.com) (JWT → Convex).
+- **Styling:** Tailwind CSS v4 with a CSS-variable design system; light/dark theming.
+- **Tooling:** [Biome](https://biomejs.dev) (lint/format), [Vitest](https://vitest.dev) (tests).
+
+For the architecture, data model, and project conventions, see [`CLAUDE.md`](CLAUDE.md).
+
+## Quick start
+
+1. Create `.env.local` with:
+
+   ```bash
+   VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+   VITE_CONVEX_URL=https://your-deployment.convex.cloud
+   CONVEX_DEPLOYMENT=dev:your-deployment
+   ```
+
+   (Or run `npx convex init` to set the Convex values automatically.)
+
+2. Run the backend and frontend in **two terminals**:
+
+   ```bash
+   npx convex dev   # Convex backend in watch mode — REQUIRED, or useQuery never resolves
+   npm run dev      # Vite dev server on http://localhost:3000
+   ```
+
+There is no single `dev:all` watch script — the two processes run side by side.
+
+## Commands
 
 ```bash
-npm install
-npm run dev
+npm run test          # Vitest (all). Single file: npx vitest run src/lib/__tests__/timeline.test.ts
+npm run check         # Biome lint + format check — must pass before committing
+npx tsc --noEmit      # Full type check (Biome does not type-check)
+npm run build         # Production/SSR build (also the best smoke test that the app compiles)
+npx convex dev --once # Deploy backend once + typecheck convex/ + regenerate convex/_generated
+npm run seed          # Seed demo data (npx convex run seed:seedDemo)
 ```
 
-# Building For Production
+## Authentication (Clerk)
 
-To build this application for production:
+1. Create an application at [clerk.com](https://clerk.com) and copy the **Publishable Key**
+   into `VITE_CLERK_PUBLISHABLE_KEY` in `.env.local`.
+2. Create a Clerk **JWT template named `convex`** (required by the Convex ↔ Clerk integration).
+3. Set `CLERK_JWT_ISSUER_DOMAIN` on the **Convex** deployment (not in the repo):
 
-```bash
-npm run build
-```
+   ```bash
+   npx convex env set CLERK_JWT_ISSUER_DOMAIN https://your-instance.clerk.accounts.dev
+   ```
 
-## Testing
+The Clerk provider wraps the Convex provider via `ConvexProviderWithClerk`
+(`src/integrations/convex/provider.tsx`).
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+## Convex
 
-```bash
-npm run test
-```
+- Set `VITE_CONVEX_URL` and `CONVEX_DEPLOYMENT` in `.env.local` (or `npx convex init`).
+- Run `npx convex dev` to start the backend in watch mode.
+- After editing anything in `convex/`, run `npx convex dev --once` to redeploy, typecheck, and
+  regenerate `convex/_generated`. Commit the regenerated output with your change.
 
-## Styling
+## Deploy (Cloudflare Workers)
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+The app ships as two layers: the Convex backend and a Cloudflare Worker that serves the SSR
+frontend. `VITE_CONVEX_URL` and `VITE_CLERK_PUBLISHABLE_KEY` are read from the environment at
+**build time** (there are no runtime Worker secrets), so each build is pinned to the backend it
+was built against.
 
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `npm install @tailwindcss/vite tailwindcss -D`
-
-## Linting & Formatting
-
-This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
-
-
-```bash
-npm run lint
-npm run format
-npm run check
-```
-
-
-## Deploy to Cloudflare Workers
-
-Each environment is a frontend **build** pointed at its own Convex backend, shipped to a
-differently-named Worker. `VITE_CONVEX_URL` and `VITE_CLERK_PUBLISHABLE_KEY` are baked in at
-build time — there are no runtime Worker secrets. The deploy scripts deploy **both layers**:
-`convex deploy` pushes the backend, then runs the build (injecting that backend's
-`VITE_CONVEX_URL`), then `wrangler` ships the Worker.
-
-| Command | Convex deploy | Cloudflare target |
+| Command | What it runs | Worker |
 | --- | --- | --- |
-| `npm run deploy` | production deployment | Worker `archstudio` |
-| `npm run deploy:dev` | dev backend | Worker `archstudio-dev` (`wrangler deploy --env dev`) |
-| `npm run deploy:preview` | branch-named preview deployment | ephemeral preview URL (`wrangler versions upload`) |
+| `npm run deploy` | `convex deploy` → `vite build` → `wrangler deploy` | `archstudio` (production) |
+| `npm run deploy:dev` | `convex dev --once` → `vite build --mode development` → `wrangler deploy --env dev` | `archstudio-dev` |
+| `npm run deploy:preview` | `convex dev --once` → `vite build --mode development` → `wrangler deploy --env preview` | preview env — see note |
 
-Orchestration lives in [`scripts/deploy.mjs`](scripts/deploy.mjs); worker names are in
-`wrangler.jsonc`.
+Worker names live in `wrangler.jsonc` (`name: "archstudio"`, `env.dev.name: "archstudio-dev"`).
 
-### Per-environment credentials
-
-Each command loads `.env.deploy.<env>` via Node's `--env-file`. Create one file per
-environment — `.env.deploy.prod`, `.env.deploy.dev`, `.env.deploy.preview` — they are
-**gitignored** (`.env.deploy.*`); never commit them. Each contains:
-
-```
-# Convex dashboard → Settings → Deploy Keys.
-# prod = production key, dev = dev backend key, preview = Preview Deploy Key.
-CONVEX_DEPLOY_KEY=
-# Clerk Publishable Key for this environment's Clerk instance.
-VITE_CLERK_PUBLISHABLE_KEY=
-# Optional — omit if you use interactive `wrangler login`.
-CLOUDFLARE_API_TOKEN=
-CLOUDFLARE_ACCOUNT_ID=
-```
+> **Note:** `npm run deploy:preview` targets `--env preview`, which is not yet defined in
+> `wrangler.jsonc`. Add an `env.preview` block there before using it.
 
 ### One-time setup
 
-1. `wrangler login` (or set `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` in the deploy files).
-2. Create the **prod** Convex deployment and a separate **dev** Convex backend; generate a
-   Deploy Key for each. Generate a **Preview Deploy Key** for previews.
-3. On **each** Convex deployment, set `CLERK_JWT_ISSUER_DOMAIN` via `npx convex env set`. For
-   preview, set it as a default preview env var in the Convex dashboard so ephemeral previews
-   inherit it.
-4. Fill in each `.env.deploy.<env>` file (keys above).
-
-
-## Setting up Clerk
-
-1. Sign up at [clerk.com](https://clerk.com) and create an application
-2. Copy the **Publishable Key** from the Clerk dashboard
-3. Set it in your `.env.local`:
-   ```bash
-   VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
-   ```
-4. Visit the demo route at `/demo/clerk` once `npm run dev` is running
-
-### What's wired up
-
-- **`<ClerkProvider>`** at the app root (`src/integrations/clerk/provider.tsx`) handles auth context for the whole tree
-- **`<SignInButton>` / `<UserButton>`** in the header swap based on auth state
-- **`/demo/clerk`** shows Clerk's prebuilt sign-in UI and a signed-in greeting
-
-### Protecting a route
-
-Wrap any component in `<SignedIn>` / `<SignedOut>`:
-
-```tsx
-import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
-
-function ProtectedPage() {
-  return (
-    <>
-      <SignedIn>
-        <YourPageContent />
-      </SignedIn>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-    </>
-  )
-}
-```
-
-For server-side checks (route loaders, server functions), see the Clerk docs on [`auth()`](https://clerk.com/docs/references/backend/auth).
-
-### Production checklist
-
-- Replace the test keys with **production keys** from a dedicated production Clerk instance
-- Configure your production domain under **Domains** in the Clerk dashboard
-- Set up social providers (Google, GitHub, etc.) under **User & Authentication → Social Connections**
-
-
-## Setting up Convex
-
-- Set the `VITE_CONVEX_URL` and `CONVEX_DEPLOYMENT` environment variables in your `.env.local`. (Or run `npx -y convex init` to set them automatically.)
-- Run `npx -y convex dev` to start the Convex server.
-
-
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
-
-```bash
-pnpm dlx shadcn@latest add button
-```
-
-
-## T3Env
-
-- You can use T3Env to add type safety to your environment variables.
-- Add Environment variables to the `src/env.mjs` file.
-- Use the environment variables in your code.
-
-### Usage
-
-```ts
-import { env } from "#/env";
-
-console.log(env.VITE_APP_TITLE);
-```
-
-
-
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+1. `wrangler login` (or provide `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` in the environment).
+2. Create the production Convex deployment (the target of `npx convex deploy`) and a separate dev
+   backend for `deploy:dev`.
+3. On **each** Convex deployment, set `CLERK_JWT_ISSUER_DOMAIN` via `npx convex env set`.
+4. Provide `VITE_CONVEX_URL` and `VITE_CLERK_PUBLISHABLE_KEY` for the build (e.g. in `.env.local`),
+   so the bundle points at the right backend and Clerk instance.

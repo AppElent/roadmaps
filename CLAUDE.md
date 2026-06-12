@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-A real-time roadmap-planning web app: timelines of initiatives across lanes and timeframes, with per-roadmap custom fields, a sortable table, milestones, public read-only share links, and JSON import/export. Built phase-by-phase from the spec in `docs/superpowers/specs/` and plans in `docs/superpowers/plans/`.
+ArchStudio is a real-time **architect's workbench**: a multi-tool app where `/dashboard` is a Home launcher and each tool is its own section. Two tools ship today — **Roadmaps** (timelines of initiatives across lanes and timeframes, with per-roadmap custom fields, a sortable table, milestones, public read-only share links, and JSON import/export) and **Diagrams** (a live Mermaid + PlantUML editor with versioning and public share links) — with a Claude-powered AI helper planned. Built phase-by-phase from specs in `docs/superpowers/specs/` and plans in `docs/superpowers/plans/`.
 
 ## Commands
 
@@ -15,6 +15,7 @@ npm run test          # Vitest (all). Single file: npx vitest run src/lib/__test
 npm run check         # Biome lint + format check — MUST pass before committing. Autofix: npx biome check --write src/
 npx tsc --noEmit      # Full type check (Biome does NOT type-check)
 npm run build         # Production/SSR build (also the best smoke test that the app compiles)
+npm run seed          # Seed demo data (npx convex run seed:seedDemo)
 npm run deploy        # Build + wrangler deploy to Cloudflare
 ```
 
@@ -25,6 +26,8 @@ There is no `dev:all` script — run `npx convex dev` and `npm run dev` in two t
 Two layers in one repo:
 - **`src/`** — React 19 + TanStack React Start (SSR), file-based routing, deployed as a Cloudflare Worker.
 - **`convex/`** — serverless backend: schema, queries, mutations. Real-time by default.
+
+**The app shell.** `/` is a public, standalone landing route (outside `AppShell`). `/dashboard` is the authed Home launcher — a grid of `ToolCard`s. Each tool lives in its own section: Roadmaps at `/roadmaps/` (list) and `/roadmaps/$id` (editor); Diagrams at `/diagrams/` (list) and `/diagrams/$id` (editor). `Sidebar.tsx` / `BottomTabBar.tsx` nav = Home / Roadmaps / Diagrams. `AppShell` gates the authed sections (`<SignedIn>` / `<RedirectToSignIn>`).
 
 **Data flow:** `Clerk (auth) → JWT → Convex → useQuery subscriptions → React`. The Clerk provider wraps the Convex provider (`src/integrations/convex/provider.tsx` uses `ConvexProviderWithClerk`). `convex/auth.config.ts` reads `CLERK_JWT_ISSUER_DOMAIN` from the Convex backend's own env (set via `npx convex env set`, not committed) and requires a Clerk JWT template named `convex`.
 
@@ -41,6 +44,8 @@ Two layers in one repo:
 - `roadmapIO.ts` — `serializeRoadmap` / `parseImport` (versioned JSON; items reference lanes by index).
 
 **Timeline rendering.** `TimelineView` is the orchestrator: it computes `axisWidth = periods.length × columnWidth(zoom)` (per-zoom column width from `timeline.ts`), maps the window onto it, packs lanes, and renders. Item dates are day-precision; the zoom level only changes gridlines/labels, not stored data. Drag/resize is optimistic-local during the gesture and snaps to an adaptive grid (`snapGranularity(zoom)`: one tier finer than the visible columns) with a live snapped preview + guide line, committed once on pointer-up via `items.update`; `TimelineView` stays read-only when no `onItemDatesChange` is passed (that's how the share view reuses it). Bars render as a colored left line by default, or a solid fill when `roadmap.barColorMode === "fill"`.
+
+**The Diagrams tool (mirrors Roadmaps' shape).** `diagrams` + `diagramVersions` Convex tables mirror `roadmaps`/`roadmapVersions`. Mermaid renders **client-side** (dynamic `import("mermaid")`, `securityLevel: "strict"`); PlantUML and future engines render via **kroki.io** — `src/lib/kroki.ts` does deflate + base64url with the browser-native `CompressionStream` (no pako), and the SVG is shown as an `<img>` object URL, never inlined. The engine registry `src/lib/diagramEngines.ts` keys off `DiagramType = Doc<"diagrams">["type"]`, so adding a schema literal forces a matching registry entry. The split-view editor `/diagrams/$id` is CodeMirror 6 on the left and a debounced preview on the right (`useDiagramRender` retains the last good render across transient errors). Source autosaves on a ~1s debounce; versions are manual + auto-before-restore only (same policy as roadmaps). Public share is `/share/diagram/$token` via `sharing.getPublicDiagram` (unauthenticated, mirroring `sharing.getPublicRoadmap`). `VersionManager` was generalized into a `VersionDialog` + thin per-entity wrappers.
 
 **The editor route** `src/routes/roadmaps/$id.tsx` is the central orchestrator wiring the bundle to `TimelineView`/`ItemTable`, the slide-over `ItemEditorPanel`, and the manager dialogs (lanes/fields/milestones/settings/share/import-export). `AppShell` gates authed pages (`<SignedIn>` / `<RedirectToSignIn>`).
 
