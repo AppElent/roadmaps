@@ -79,7 +79,7 @@ export function ItemTable({
 		</th>
 	);
 
-	const colCount = 2 + columns.length;
+	const colCount = 1 + columns.length;
 	const labelClass =
 		"font-mono text-[11px] uppercase tracking-wide text-neutral-500";
 
