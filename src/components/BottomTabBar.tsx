@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Home, Map as MapIcon, Workflow } from "lucide-react";
+import { Home, Map as MapIcon, UserCircle, Workflow } from "lucide-react";
 
 const tabClass =
 	"flex flex-col items-center gap-1 text-xs text-neutral-500 [&.active]:text-neutral-900";
@@ -15,6 +15,9 @@ export function BottomTabBar() {
 			</Link>
 			<Link to="/diagrams" className={tabClass}>
 				<Workflow size={20} /> Diagrams
+			</Link>
+			<Link to="/account" className={tabClass}>
+				<UserCircle size={20} /> Account
 			</Link>
 		</nav>
 	);

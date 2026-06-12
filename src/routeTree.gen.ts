@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as RoadmapsIndexRouteImport } from './routes/roadmaps/index'
 import { Route as DiagramsIndexRouteImport } from './routes/diagrams/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as ShareTokenRouteImport } from './routes/share/$token'
 import { Route as RoadmapsIdRouteImport } from './routes/roadmaps/$id'
 import { Route as DiagramsIdRouteImport } from './routes/diagrams/$id'
@@ -36,6 +37,11 @@ const DiagramsIndexRoute = DiagramsIndexRouteImport.update({
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/dashboard/',
   path: '/dashboard/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountIndexRoute = AccountIndexRouteImport.update({
+  id: '/account/',
+  path: '/account/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ShareTokenRoute = ShareTokenRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/diagrams/$id': typeof DiagramsIdRoute
   '/roadmaps/$id': typeof RoadmapsIdRoute
   '/share/$token': typeof ShareTokenRoute
+  '/account/': typeof AccountIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/diagrams/': typeof DiagramsIndexRoute
   '/roadmaps/': typeof RoadmapsIndexRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/diagrams/$id': typeof DiagramsIdRoute
   '/roadmaps/$id': typeof RoadmapsIdRoute
   '/share/$token': typeof ShareTokenRoute
+  '/account': typeof AccountIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/diagrams': typeof DiagramsIndexRoute
   '/roadmaps': typeof RoadmapsIndexRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/diagrams/$id': typeof DiagramsIdRoute
   '/roadmaps/$id': typeof RoadmapsIdRoute
   '/share/$token': typeof ShareTokenRoute
+  '/account/': typeof AccountIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/diagrams/': typeof DiagramsIndexRoute
   '/roadmaps/': typeof RoadmapsIndexRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/diagrams/$id'
     | '/roadmaps/$id'
     | '/share/$token'
+    | '/account/'
     | '/dashboard/'
     | '/diagrams/'
     | '/roadmaps/'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/diagrams/$id'
     | '/roadmaps/$id'
     | '/share/$token'
+    | '/account'
     | '/dashboard'
     | '/diagrams'
     | '/roadmaps'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/diagrams/$id'
     | '/roadmaps/$id'
     | '/share/$token'
+    | '/account/'
     | '/dashboard/'
     | '/diagrams/'
     | '/roadmaps/'
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   DiagramsIdRoute: typeof DiagramsIdRoute
   RoadmapsIdRoute: typeof RoadmapsIdRoute
   ShareTokenRoute: typeof ShareTokenRoute
+  AccountIndexRoute: typeof AccountIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   DiagramsIndexRoute: typeof DiagramsIndexRoute
   RoadmapsIndexRoute: typeof RoadmapsIndexRoute
@@ -162,6 +175,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/': {
+      id: '/account/'
+      path: '/account'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AccountIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/share/$token': {
@@ -200,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiagramsIdRoute: DiagramsIdRoute,
   RoadmapsIdRoute: RoadmapsIdRoute,
   ShareTokenRoute: ShareTokenRoute,
+  AccountIndexRoute: AccountIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   DiagramsIndexRoute: DiagramsIndexRoute,
   RoadmapsIndexRoute: RoadmapsIndexRoute,
