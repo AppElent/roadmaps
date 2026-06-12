@@ -34,7 +34,9 @@ function DiagramEditor() {
 	const sourceRef = useRef<string | null>(null);
 	const [dirty, setDirty] = useState(false);
 	const [saving, setSaving] = useState(false);
-	const [codeOpen, setCodeOpen] = useState(true);
+	const [codeOpen, setCodeOpen] = useState(() =>
+		typeof window === "undefined" ? true : window.innerWidth >= 768,
+	);
 	const [versionsOpen, setVersionsOpen] = useState(false);
 	const [shareOpen, setShareOpen] = useState(false);
 
@@ -136,9 +138,9 @@ function DiagramEditor() {
 					</button>
 				</header>
 
-				<div className="flex h-[calc(100dvh-180px)] min-h-[320px] overflow-hidden rounded-lg border border-neutral-200 bg-white">
+				<div className="flex h-[calc(100dvh-180px)] min-h-[320px] flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white md:flex-row">
 					{codeOpen ? (
-						<div className="w-[38%] min-w-[260px] border-r border-neutral-200">
+						<div className="h-[45%] border-b border-neutral-200 md:h-auto md:w-[38%] md:min-w-[260px] md:border-b-0 md:border-r">
 							<CodeEditorPanel
 								value={source}
 								language={diagram.type}
@@ -146,7 +148,7 @@ function DiagramEditor() {
 							/>
 						</div>
 					) : null}
-					<div className="min-w-0 flex-1">
+					<div className="min-h-0 min-w-0 flex-1">
 						<DiagramPreview type={diagram.type} source={source} />
 					</div>
 				</div>
