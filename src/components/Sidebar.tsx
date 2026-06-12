@@ -28,7 +28,9 @@ export function Sidebar() {
 			</nav>
 			<div className="mt-auto flex items-center gap-2 px-1">
 				<UserButton />
-				<span className="rm-label">Account</span>
+				<Link to="/account" className={navLinkClass}>
+					Account
+				</Link>
 				<div className="ml-auto">
 					<ThemeToggle />
 				</div>
