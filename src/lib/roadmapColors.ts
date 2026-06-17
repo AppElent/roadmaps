@@ -10,7 +10,7 @@ export function barColor(
 ): string {
 	if (!colorByFieldKey) return FALLBACK;
 	const field = fields.find((f) => f.key === colorByFieldKey);
-	if (!field || !field.options) return FALLBACK;
+	if (!field?.options) return FALLBACK;
 	const value = item.values[colorByFieldKey];
 	const optionId = Array.isArray(value) ? value[0] : value;
 	const option = field.options.find((o) => o.id === optionId);
