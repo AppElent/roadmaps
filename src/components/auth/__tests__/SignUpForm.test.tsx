@@ -54,7 +54,7 @@ describe("SignUpForm", () => {
 	it("verifies the code and completes sign-up", async () => {
 		create.mockResolvedValue({});
 		prepare.mockResolvedValue({});
-		attempt.mockResolvedValue({ status: "complete" });
+		attempt.mockResolvedValue({ status: "complete", createdSessionId: "s1" });
 		const onSuccess = vi.fn();
 		renderForm(onSuccess);
 		fireEvent.change(screen.getByLabelText("Email"), {

@@ -44,7 +44,7 @@ export function SignUpForm({ onSuccess }: { onSuccess: () => void }) {
 		try {
 			const result = await signUp.attemptEmailAddressVerification({ code });
 			if (result.status === "complete") {
-				await setActive({ session: signUp.createdSessionId });
+				await setActive({ session: result.createdSessionId });
 				onSuccess();
 			} else {
 				setError("Invalid or incomplete verification.");

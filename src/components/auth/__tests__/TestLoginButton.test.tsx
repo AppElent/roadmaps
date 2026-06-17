@@ -24,6 +24,14 @@ describe("TestLoginButton", () => {
 		expect(container.firstChild).toBeNull();
 	});
 
+	it("renders nothing on a test instance when creds are absent", () => {
+		vi.stubEnv("VITE_CLERK_PUBLISHABLE_KEY", "pk_test_x");
+		vi.stubEnv("VITE_TEST_USER_EMAIL", "");
+		vi.stubEnv("VITE_TEST_USER_PASSWORD", "");
+		const { container } = render(<TestLoginButton onSuccess={() => {}} />);
+		expect(container.firstChild).toBeNull();
+	});
+
 	it("signs in with env creds when shown and clicked", async () => {
 		vi.stubEnv("VITE_CLERK_PUBLISHABLE_KEY", "pk_test_x");
 		vi.stubEnv("VITE_TEST_USER_EMAIL", "test@test.com");
