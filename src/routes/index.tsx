@@ -1,9 +1,4 @@
-import {
-	SignedIn,
-	SignedOut,
-	SignInButton,
-	UserButton,
-} from "@clerk/clerk-react";
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	type LucideIcon,
@@ -12,6 +7,7 @@ import {
 	Workflow,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import HeaderUser from "@/integrations/clerk/header-user";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({ component: LandingPage });
@@ -64,14 +60,12 @@ function PrimaryCta({ children }: { children: string }) {
 	return (
 		<>
 			<SignedOut>
-				<SignInButton mode="modal">
-					<button
-						type="button"
-						className="rounded-full bg-[var(--palm)] px-6 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5"
-					>
-						{children}
-					</button>
-				</SignInButton>
+				<Link
+					to="/sign-in"
+					className="rounded-full bg-[var(--palm)] px-6 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+				>
+					{children}
+				</Link>
 			</SignedOut>
 			<SignedIn>
 				<Link
@@ -142,14 +136,12 @@ function LandingPage() {
 				<div className="flex items-center gap-3">
 					<ThemeToggle />
 					<SignedOut>
-						<SignInButton mode="modal">
-							<button
-								type="button"
-								className="rounded-full bg-[var(--palm)] px-4 py-1.5 text-sm font-semibold text-white transition hover:-translate-y-0.5"
-							>
-								Sign in
-							</button>
-						</SignInButton>
+						<Link
+							to="/sign-in"
+							className="rounded-full bg-[var(--palm)] px-4 py-1.5 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+						>
+							Sign in
+						</Link>
 					</SignedOut>
 					<SignedIn>
 						<Link
@@ -158,7 +150,7 @@ function LandingPage() {
 						>
 							Open app
 						</Link>
-						<UserButton />
+						<HeaderUser />
 					</SignedIn>
 				</div>
 			</header>
