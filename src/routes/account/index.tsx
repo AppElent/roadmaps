@@ -1,7 +1,6 @@
-import { UserProfile } from "@clerk/clerk-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
-import { AppearanceSettings } from "@/components/account/AppearanceSettings";
+import { ProfilePanel } from "@/components/auth/ProfilePanel";
 
 export const Route = createFileRoute("/account/")({
 	ssr: false,
@@ -19,11 +18,7 @@ function AccountPage() {
 						Manage your profile, security, and appearance.
 					</p>
 				</header>
-
-				<div className="space-y-6">
-					<AppearanceSettings />
-					<UserProfile routing="hash" />
-				</div>
+				<ProfilePanel />
 			</div>
 		</AppShell>
 	);
