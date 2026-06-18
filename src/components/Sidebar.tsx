@@ -1,6 +1,6 @@
-import { UserButton } from "@clerk/clerk-react";
 import { Link } from "@tanstack/react-router";
 import { Home, Map as MapIcon, Workflow } from "lucide-react";
+import HeaderUser from "@/integrations/clerk/header-user";
 import ThemeToggle from "./ThemeToggle";
 
 const navLinkClass =
@@ -27,7 +27,7 @@ export function Sidebar() {
 				</Link>
 			</nav>
 			<div className="mt-auto flex items-center gap-2 px-1">
-				<UserButton />
+				<HeaderUser />
 				<Link to="/account" className={navLinkClass}>
 					Account
 				</Link>

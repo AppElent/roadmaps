@@ -1,3 +1,4 @@
+import { useUser } from "@clerk/clerk-react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -16,6 +17,7 @@ const OPTIONS: { mode: ThemeMode; label: string; icon: typeof Sun }[] = [
 
 export function AppearanceSettings() {
 	const [mode, setMode] = useState<ThemeMode>("auto");
+	const { user } = useUser();
 
 	useEffect(() => {
 		setMode(getInitialMode());
@@ -38,6 +40,13 @@ export function AppearanceSettings() {
 	function selectMode(next: ThemeMode) {
 		setMode(next);
 		setThemeMode(next);
+		if (user) {
+			user
+				.update({ unsafeMetadata: { ...user.unsafeMetadata, theme: next } })
+				.catch(() => {
+					// non-fatal: local theme already applied
+				});
+		}
 	}
 
 	return (

@@ -69,6 +69,17 @@
   --rm-panel: oklch(100% 0 0);
   --rm-panel-line: oklch(90% 0.008 240);
   --rm-bar-bg: oklch(100% 0 0);
+
+  --auth-bg: oklch(98% 0.004 240);
+  --auth-fg: oklch(25% 0.02 240);
+  --auth-muted: oklch(50% 0.018 240);
+  --auth-card-bg: oklch(100% 0 0);
+  --auth-border: oklch(90% 0.008 240);
+  --auth-radius: 0.625rem;
+  --auth-field-bg: oklch(100% 0 0);
+  --auth-accent: var(--rm-accent);
+  --auth-accent-fg: var(--rm-accent-fg);
+  --auth-error: oklch(58% 0.18 25);
 }
 
 .dark {
@@ -133,6 +144,17 @@
   --rm-panel: oklch(20% 0.012 250);
   --rm-panel-line: oklch(30% 0.01 240);
   --rm-bar-bg: oklch(26% 0.012 250);
+
+  --auth-bg: oklch(16% 0.012 250);
+  --auth-fg: oklch(92% 0.01 240);
+  --auth-muted: oklch(70% 0.02 240);
+  --auth-card-bg: oklch(20% 0.012 250);
+  --auth-border: oklch(30% 0.01 240);
+  --auth-radius: 0.625rem;
+  --auth-field-bg: oklch(24% 0.012 250);
+  --auth-accent: var(--rm-accent);
+  --auth-accent-fg: var(--rm-accent-fg);
+  --auth-error: oklch(70% 0.15 25);
 }
 
 @theme inline {

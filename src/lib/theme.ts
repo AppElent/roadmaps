@@ -33,3 +33,21 @@ export function setThemeMode(mode: ThemeMode) {
 	applyThemeMode(mode);
 	window.localStorage.setItem("theme", mode);
 }
+
+function isThemeMode(value: unknown): value is ThemeMode {
+	return value === "light" || value === "dark" || value === "auto";
+}
+
+/**
+ * Given the theme stored in Clerk metadata and the current local mode, return
+ * the mode to apply, or null if nothing should change. Pure — no DOM/storage.
+ */
+export function reconcileTheme(
+	clerkTheme: unknown,
+	localTheme: ThemeMode,
+): ThemeMode | null {
+	if (!isThemeMode(clerkTheme)) {
+		return null;
+	}
+	return clerkTheme === localTheme ? null : clerkTheme;
+}
