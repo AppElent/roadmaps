@@ -4,8 +4,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const create = vi.fn();
 const setActive = vi.fn();
+let isLoaded = true;
 vi.mock("@clerk/clerk-react", () => ({
-	useSignIn: () => ({ isLoaded: true, signIn: { create }, setActive }),
+	useSignIn: () => ({ isLoaded, signIn: { create }, setActive }),
 }));
 
 import { AuthConfigProvider } from "../AuthConfigProvider";
@@ -25,6 +26,14 @@ describe("SignInForm", () => {
 		vi.unstubAllEnvs();
 		create.mockReset();
 		setActive.mockReset();
+		isLoaded = true;
+	});
+
+	it("does not submit while Clerk is not loaded", () => {
+		isLoaded = false;
+		renderForm();
+		fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
+		expect(create).not.toHaveBeenCalled();
 	});
 
 	it("submits credentials and activates the session", async () => {
