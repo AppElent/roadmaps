@@ -1,8 +1,7 @@
+import { AuthCard, SignInForm } from "@appelent/auth";
 import { useAuth } from "@clerk/clerk-react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { AuthCard } from "@/components/auth/AuthCard";
-import { SignInForm } from "@/components/auth/SignInForm";
 
 export const Route = createFileRoute("/sign-in")({
 	ssr: false,

@@ -1,6 +1,6 @@
+import { HeaderUser } from "@appelent/auth";
 import { Link } from "@tanstack/react-router";
 import { Home, Map as MapIcon, Workflow } from "lucide-react";
-import HeaderUser from "@/integrations/clerk/header-user";
 import ThemeToggle from "./ThemeToggle";
 
 const navLinkClass =
