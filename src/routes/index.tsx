@@ -1,3 +1,4 @@
+import { HeaderUser } from "@appelent/auth";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
@@ -7,7 +8,6 @@ import {
 	Workflow,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
-import HeaderUser from "@/integrations/clerk/header-user";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({ component: LandingPage });
