@@ -33,3 +33,69 @@ test("getBundle includes an empty dependencies array", async () => {
 		.query(api.roadmaps.getBundle, { roadmapId });
 	expect(bundle.dependencies).toEqual([]);
 });
+
+test("create adds a dependency visible in the bundle", async () => {
+	const t = convexTest(schema, modules);
+	const { roadmapId, mkItem } = await setup(t);
+	const a = await mkItem("A");
+	const b = await mkItem("B");
+	await t
+		.withIdentity({ subject: "user_alex" })
+		.mutation(api.dependencies.create, {
+			roadmapId,
+			predecessorId: a,
+			successorId: b,
+		});
+	const bundle = await t
+		.withIdentity({ subject: "user_alex" })
+		.query(api.roadmaps.getBundle, { roadmapId });
+	expect(bundle.dependencies).toHaveLength(1);
+	expect(bundle.dependencies[0].predecessorId).toBe(a);
+	expect(bundle.dependencies[0].successorId).toBe(b);
+});
+
+test("create rejects self-links, duplicates, cycles, and non-owners", async () => {
+	const t = convexTest(schema, modules);
+	const { roadmapId, mkItem } = await setup(t);
+	const a = await mkItem("A");
+	const b = await mkItem("B");
+	const call = (predecessorId: typeof a, successorId: typeof b) =>
+		t
+			.withIdentity({ subject: "user_alex" })
+			.mutation(api.dependencies.create, {
+				roadmapId,
+				predecessorId,
+				successorId,
+			});
+
+	await expect(call(a, a)).rejects.toThrow(/self/i);
+	await call(a, b);
+	await expect(call(a, b)).rejects.toThrow(/already exists/i);
+	await expect(call(b, a)).rejects.toThrow(/cycle/i);
+	await expect(
+		t
+			.withIdentity({ subject: "user_mallory" })
+			.mutation(api.dependencies.create, {
+				roadmapId,
+				predecessorId: a,
+				successorId: b,
+			}),
+	).rejects.toThrow(/access denied/);
+});
+
+test("create rejects items from a different roadmap", async () => {
+	const t = convexTest(schema, modules);
+	const first = await setup(t);
+	const second = await setup(t);
+	const a = await first.mkItem("A");
+	const foreign = await second.mkItem("Foreign");
+	await expect(
+		t
+			.withIdentity({ subject: "user_alex" })
+			.mutation(api.dependencies.create, {
+				roadmapId: first.roadmapId,
+				predecessorId: a,
+				successorId: foreign,
+			}),
+	).rejects.toThrow(/not in this roadmap/i);
+});
