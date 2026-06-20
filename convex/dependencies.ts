@@ -75,3 +75,13 @@ export const create = mutation({
 		});
 	},
 });
+
+export const remove = mutation({
+	args: { dependencyId: v.id("dependencies") },
+	handler: async (ctx, args) => {
+		const dep = await ctx.db.get(args.dependencyId);
+		if (!dep) throw new Error("Dependency not found");
+		await requireRoadmapOwner(ctx, dep.roadmapId);
+		await ctx.db.delete(args.dependencyId);
+	},
+});

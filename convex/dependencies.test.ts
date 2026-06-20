@@ -99,3 +99,24 @@ test("create rejects items from a different roadmap", async () => {
 			}),
 	).rejects.toThrow(/not in this roadmap/i);
 });
+
+test("remove deletes a dependency", async () => {
+	const t = convexTest(schema, modules);
+	const { roadmapId, mkItem } = await setup(t);
+	const a = await mkItem("A");
+	const b = await mkItem("B");
+	const depId = await t
+		.withIdentity({ subject: "user_alex" })
+		.mutation(api.dependencies.create, {
+			roadmapId,
+			predecessorId: a,
+			successorId: b,
+		});
+	await t
+		.withIdentity({ subject: "user_alex" })
+		.mutation(api.dependencies.remove, { dependencyId: depId });
+	const bundle = await t
+		.withIdentity({ subject: "user_alex" })
+		.query(api.roadmaps.getBundle, { roadmapId });
+	expect(bundle.dependencies).toEqual([]);
+});
