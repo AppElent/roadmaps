@@ -120,3 +120,33 @@ test("remove deletes a dependency", async () => {
 		.query(api.roadmaps.getBundle, { roadmapId });
 	expect(bundle.dependencies).toEqual([]);
 });
+
+test("deleting an item removes dependencies referencing it", async () => {
+	const t = convexTest(schema, modules);
+	const { roadmapId, mkItem } = await setup(t);
+	const a = await mkItem("A");
+	const b = await mkItem("B");
+	const c = await mkItem("C");
+	// a -> b (b is successor), b -> c (b is predecessor)
+	await t
+		.withIdentity({ subject: "user_alex" })
+		.mutation(api.dependencies.create, {
+			roadmapId,
+			predecessorId: a,
+			successorId: b,
+		});
+	await t
+		.withIdentity({ subject: "user_alex" })
+		.mutation(api.dependencies.create, {
+			roadmapId,
+			predecessorId: b,
+			successorId: c,
+		});
+	await t
+		.withIdentity({ subject: "user_alex" })
+		.mutation(api.items.remove, { itemId: b });
+	const bundle = await t
+		.withIdentity({ subject: "user_alex" })
+		.query(api.roadmaps.getBundle, { roadmapId });
+	expect(bundle.dependencies).toEqual([]);
+});

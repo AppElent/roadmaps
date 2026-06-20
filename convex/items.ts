@@ -60,6 +60,21 @@ export const remove = mutation({
 		const item = await ctx.db.get(args.itemId);
 		if (!item) throw new Error("Item not found");
 		await requireRoadmapOwner(ctx, item.roadmapId);
+		const [asPred, asSucc] = await Promise.all([
+			ctx.db
+				.query("dependencies")
+				.withIndex("by_predecessor", (q) =>
+					q.eq("predecessorId", args.itemId),
+				)
+				.collect(),
+			ctx.db
+				.query("dependencies")
+				.withIndex("by_successor", (q) => q.eq("successorId", args.itemId))
+				.collect(),
+		]);
+		for (const dep of [...asPred, ...asSucc]) {
+			await ctx.db.delete(dep._id);
+		}
 		await ctx.db.delete(args.itemId);
 	},
 });
