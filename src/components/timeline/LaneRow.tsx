@@ -21,6 +21,8 @@ export function LaneRow({
 	previewGeometryFor,
 	onAddItem,
 	onAddItemAt,
+	onItemLinkDrag,
+	onItemLinkCommit,
 }: {
 	lane: Doc<"lanes">;
 	items: Doc<"items">[];
@@ -49,6 +51,12 @@ export function LaneRow({
 	) => { left: number; width: number };
 	onAddItem?: (laneId: Doc<"lanes">["_id"]) => void;
 	onAddItemAt?: (laneId: Doc<"lanes">["_id"], localX: number) => void;
+	onItemLinkDrag?: (clientX: number, clientY: number) => void;
+	onItemLinkCommit?: (
+		item: Doc<"items">,
+		clientX: number,
+		clientY: number,
+	) => void;
 }) {
 	const depth = items.length ? Math.max(...rows) + 1 : 1;
 	const height = depth * (rowHeight + rowGap) + rowGap;
@@ -109,6 +117,12 @@ export function LaneRow({
 						previewGeometry={
 							previewGeometryFor
 								? (mode, deltaX) => previewGeometryFor(item, mode, deltaX)
+								: undefined
+						}
+						onLinkDrag={onItemLinkDrag}
+						onLinkCommit={
+							onItemLinkCommit
+								? (x, y) => onItemLinkCommit(item, x, y)
 								: undefined
 						}
 					/>

@@ -42,6 +42,8 @@ function RoadmapEditor() {
 	);
 	const updateItem = useMutation(api.items.update);
 	const createLane = useMutation(api.lanes.create);
+	const createDependency = useMutation(api.dependencies.create);
+	const removeDependency = useMutation(api.dependencies.remove);
 	const [zoom, setZoom] = useState<Zoom | null>(null);
 	const [view, setView] = useState<"timeline" | "table">("timeline");
 	const [editing, setEditing] = useState<Id<"items"> | null>(null);
@@ -186,6 +188,14 @@ function RoadmapEditor() {
 						}
 						onAddItem={(laneId, startMs) => setNewItem({ laneId, startMs })}
 						onAddLane={(name) => createLane({ roadmapId, name })}
+						onCreateDependency={(predecessorId, successorId) =>
+							createDependency({
+								roadmapId,
+								predecessorId,
+								successorId,
+							}).catch(() => {})
+						}
+						onRemoveDependency={(id) => removeDependency({ dependencyId: id })}
 					/>
 				) : (
 					<ItemTable

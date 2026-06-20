@@ -17,6 +17,8 @@ export function ItemBar({
 	onDragMove,
 	onDragEnd,
 	previewGeometry,
+	onLinkDrag,
+	onLinkCommit,
 }: {
 	item: Doc<"items">;
 	left: number;
@@ -33,6 +35,8 @@ export function ItemBar({
 		mode: DragMode,
 		deltaX: number,
 	) => { left: number; width: number };
+	onLinkDrag?: (clientX: number, clientY: number) => void;
+	onLinkCommit?: (clientX: number, clientY: number) => void;
 }) {
 	const [preview, setPreview] = useState<{
 		left: number;
@@ -45,6 +49,7 @@ export function ItemBar({
 		startX: number;
 		startY: number;
 	} | null>(null);
+	const linking = useRef(false);
 	const editable = Boolean(onDragCommit);
 	const fill = colorMode === "fill";
 
@@ -81,6 +86,27 @@ export function ItemBar({
 			return;
 		}
 		onDragCommit?.(mode, dx, e.clientY);
+	}
+
+	function linkBegin(e: React.PointerEvent) {
+		if (!onLinkCommit) return;
+		e.preventDefault();
+		e.stopPropagation();
+		(e.target as Element).setPointerCapture(e.pointerId);
+		linking.current = true;
+	}
+
+	function linkMove(e: React.PointerEvent) {
+		if (!linking.current) return;
+		e.stopPropagation();
+		onLinkDrag?.(e.clientX, e.clientY);
+	}
+
+	function linkEnd(e: React.PointerEvent) {
+		if (!linking.current) return;
+		e.stopPropagation();
+		linking.current = false;
+		onLinkCommit?.(e.clientX, e.clientY);
 	}
 
 	const renderLeft = preview ? preview.left : left;
@@ -133,6 +159,17 @@ export function ItemBar({
 				<span
 					onPointerDown={(e) => begin("resize-end", e)}
 					className="absolute inset-y-0 right-0 w-1.5 cursor-ew-resize"
+				/>
+			) : null}
+			{onLinkCommit ? (
+				<button
+					type="button"
+					tabIndex={-1}
+					aria-label="Link to another item"
+					onPointerDown={linkBegin}
+					onPointerMove={linkMove}
+					onPointerUp={linkEnd}
+					className="absolute -right-1 top-1/2 hidden h-3 w-3 -translate-y-1/2 cursor-crosshair rounded-full border border-neutral-400 bg-white p-0 group-hover:block"
 				/>
 			) : null}
 		</div>

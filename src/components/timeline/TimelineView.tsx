@@ -42,6 +42,7 @@ export function TimelineView({
 	onAddItem,
 	onAddLane,
 	onRemoveDependency,
+	onCreateDependency,
 }: {
 	bundle: TimelineBundle;
 	zoom: Zoom;
@@ -55,6 +56,10 @@ export function TimelineView({
 	onAddItem?: (laneId: Doc<"lanes">["_id"], startMs?: number) => void;
 	onAddLane?: (name: string) => void;
 	onRemoveDependency?: (id: Doc<"dependencies">["_id"]) => void;
+	onCreateDependency?: (
+		predecessorId: Doc<"items">["_id"],
+		successorId: Doc<"items">["_id"],
+	) => void;
 }) {
 	const { roadmap, fields, lanes, items, milestones, dependencies } = bundle;
 	const lanesRef = useRef<HTMLDivElement>(null);
@@ -94,6 +99,34 @@ export function TimelineView({
 		}
 		return map;
 	}, [lanes, items, layout, windowStart, windowEnd, axisWidth]);
+
+	const itemAtClient = (clientX: number, clientY: number) => {
+		const el = lanesRef.current;
+		if (!el) return null;
+		const box = el.getBoundingClientRect();
+		const x = clientX - box.left - LABEL_WIDTH;
+		const y = clientY - box.top;
+		for (const [id, r] of itemRects) {
+			if (
+				x >= r.left &&
+				x <= r.left + r.width &&
+				y >= r.top &&
+				y <= r.top + r.height
+			) {
+				return id;
+			}
+		}
+		return null;
+	};
+
+	const handleItemLinkCommit = onCreateDependency
+		? (item: Doc<"items">, clientX: number, clientY: number) => {
+				const targetId = itemAtClient(clientX, clientY);
+				if (targetId && targetId !== item._id) {
+					onCreateDependency(item._id, targetId as Doc<"items">["_id"]);
+				}
+			}
+		: undefined;
 
 	const editable = Boolean(onItemDatesChange);
 
@@ -202,6 +235,7 @@ export function TimelineView({
 												)
 										: undefined
 								}
+								onItemLinkCommit={handleItemLinkCommit}
 							/>
 						);
 					})}
