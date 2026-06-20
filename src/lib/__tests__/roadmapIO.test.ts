@@ -78,6 +78,7 @@ const bundle = {
 		},
 	] as unknown as Doc<"items">[],
 	milestones: [] as unknown as Doc<"milestones">[],
+	dependencies: [] as unknown as Doc<"dependencies">[],
 };
 
 test("serializeRoadmap references lanes by index", () => {

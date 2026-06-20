@@ -8,7 +8,7 @@ export async function loadRoadmapChildren(
 	ctx: QueryCtx | MutationCtx,
 	roadmapId: Id<"roadmaps">,
 ) {
-	const [fields, lanes, items, milestones] = await Promise.all([
+	const [fields, lanes, items, milestones, dependencies] = await Promise.all([
 		ctx.db
 			.query("fields")
 			.withIndex("by_roadmap", (q) => q.eq("roadmapId", roadmapId))
@@ -25,11 +25,16 @@ export async function loadRoadmapChildren(
 			.query("milestones")
 			.withIndex("by_roadmap", (q) => q.eq("roadmapId", roadmapId))
 			.collect(),
+		ctx.db
+			.query("dependencies")
+			.withIndex("by_roadmap", (q) => q.eq("roadmapId", roadmapId))
+			.collect(),
 	]);
 	return {
 		fields: byOrder(fields),
 		lanes: byOrder(lanes),
 		items: byOrder(items),
 		milestones,
+		dependencies,
 	};
 }

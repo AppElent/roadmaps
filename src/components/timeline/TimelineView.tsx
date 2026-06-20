@@ -29,6 +29,7 @@ export interface TimelineBundle {
 	lanes: Doc<"lanes">[];
 	items: Doc<"items">[];
 	milestones: Doc<"milestones">[];
+	dependencies: Doc<"dependencies">[];
 }
 
 export function TimelineView({
