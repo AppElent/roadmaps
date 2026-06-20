@@ -78,6 +78,7 @@ const bundle = {
 		},
 	] as unknown as Doc<"items">[],
 	milestones: [] as unknown as Doc<"milestones">[],
+	dependencies: [] as unknown as Doc<"dependencies">[],
 };
 
 test("serializeRoadmap references lanes by index", () => {
@@ -168,4 +169,39 @@ test("serializeRoadmap includes barColorMode and parseImport round-trips it", ()
 	const json = JSON.stringify(serializeRoadmap(bundle));
 	const parsed = parseImport(json);
 	expect(parsed.barColorMode).toBe("fill");
+});
+
+test("serializeRoadmap emits dependencies by item index and round-trips", () => {
+	const withDeps = {
+		...bundle,
+		items: [
+			{ ...bundle.items[0], _id: "i1" },
+			{ ...bundle.items[0], _id: "i2", title: "Item 2" },
+		] as unknown as (typeof bundle)["items"],
+		dependencies: [
+			{
+				_id: "d1",
+				_creationTime: 0,
+				roadmapId: "r1",
+				userId: "u",
+				predecessorId: "i1",
+				successorId: "i2",
+			},
+		] as unknown as (typeof bundle)["dependencies"],
+	};
+	const out = serializeRoadmap(withDeps);
+	expect(out.dependencies).toEqual([
+		{ predecessorIndex: 0, successorIndex: 1 },
+	]);
+	const parsed = parseImport(JSON.stringify(out));
+	expect(parsed.dependencies).toEqual([
+		{ predecessorIndex: 0, successorIndex: 1 },
+	]);
+});
+
+test("parseImport accepts payloads without a dependencies field", () => {
+	const out = serializeRoadmap(bundle);
+	const { dependencies: _drop, ...noDeps } = out;
+	const parsed = parseImport(JSON.stringify(noDeps));
+	expect(parsed.dependencies).toBeUndefined();
 });

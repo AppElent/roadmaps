@@ -42,6 +42,8 @@ function RoadmapEditor() {
 	);
 	const updateItem = useMutation(api.items.update);
 	const createLane = useMutation(api.lanes.create);
+	const createDependency = useMutation(api.dependencies.create);
+	const removeDependency = useMutation(api.dependencies.remove);
 	const [zoom, setZoom] = useState<Zoom | null>(null);
 	const [view, setView] = useState<"timeline" | "table">("timeline");
 	const [editing, setEditing] = useState<Id<"items"> | null>(null);
@@ -63,6 +65,7 @@ function RoadmapEditor() {
 		optionId: "all",
 	});
 	const [sort, setSort] = useState<SortState>({ key: "startDate", dir: 1 });
+	const [depError, setDepError] = useState<string | null>(null);
 
 	if (bundle === undefined) {
 		return (
@@ -176,6 +179,19 @@ function RoadmapEditor() {
 					/>
 				</div>
 
+				{depError ? (
+					<div className="mb-3 flex items-center justify-between rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+						<span>{depError}</span>
+						<button
+							type="button"
+							onClick={() => setDepError(null)}
+							className="ml-2 shrink-0 font-medium underline"
+						>
+							Dismiss
+						</button>
+					</div>
+				) : null}
+
 				{view === "timeline" ? (
 					<TimelineView
 						bundle={visibleBundle}
@@ -186,6 +202,28 @@ function RoadmapEditor() {
 						}
 						onAddItem={(laneId, startMs) => setNewItem({ laneId, startMs })}
 						onAddLane={(name) => createLane({ roadmapId, name })}
+						onCreateDependency={(predecessorId, successorId) => {
+							setDepError(null);
+							createDependency({
+								roadmapId,
+								predecessorId,
+								successorId,
+							}).catch((e) =>
+								setDepError(
+									e instanceof Error ? e.message : "Could not add dependency",
+								),
+							);
+						}}
+						onRemoveDependency={(id) => {
+							setDepError(null);
+							removeDependency({ dependencyId: id }).catch((e) =>
+								setDepError(
+									e instanceof Error
+										? e.message
+										: "Could not remove dependency",
+								),
+							);
+						}}
 					/>
 				) : (
 					<ItemTable
@@ -205,6 +243,8 @@ function RoadmapEditor() {
 					item={editingItem}
 					fields={bundle.fields}
 					lanes={bundle.lanes}
+					allItems={bundle.items}
+					dependencies={bundle.dependencies}
 					windowStart={bundle.roadmap.startDate}
 					presetLaneId={newItem?.laneId}
 					presetStartMs={newItem?.startMs}

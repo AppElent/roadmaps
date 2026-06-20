@@ -15,12 +15,12 @@ export async function snapshotRoadmap(
 ): Promise<RoadmapSnapshot> {
 	const roadmap = await ctx.db.get(roadmapId);
 	if (!roadmap) throw new Error("Roadmap not found");
-	const { fields, lanes, items, milestones } = await loadRoadmapChildren(
-		ctx,
-		roadmapId,
-	);
+	const { fields, lanes, items, milestones, dependencies } =
+		await loadRoadmapChildren(ctx, roadmapId);
 	const laneIndex = new Map<Id<"lanes">, number>();
 	lanes.forEach((lane, i) => laneIndex.set(lane._id, i));
+	const itemIndex = new Map<Id<"items">, number>();
+	items.forEach((item, i) => itemIndex.set(item._id, i));
 	return {
 		name: roadmap.name,
 		startDate: roadmap.startDate,
@@ -57,6 +57,15 @@ export async function snapshotRoadmap(
 			date: m.date,
 			color: m.color,
 		})),
+		dependencies: dependencies
+			.filter(
+				(d) =>
+					itemIndex.has(d.predecessorId) && itemIndex.has(d.successorId),
+			)
+			.map((d) => ({
+				predecessorIndex: itemIndex.get(d.predecessorId) as number,
+				successorIndex: itemIndex.get(d.successorId) as number,
+			})),
 	};
 }
 
@@ -73,6 +82,7 @@ export async function applySnapshot(
 		...existing.lanes,
 		...existing.items,
 		...existing.milestones,
+		...existing.dependencies,
 	]) {
 		await ctx.db.delete(row._id);
 	}
@@ -107,9 +117,10 @@ export async function applySnapshot(
 		laneIds.push(id);
 	}
 
+	const itemIds: Id<"items">[] = [];
 	for (const it of snapshot.items) {
 		const laneId = laneIds[it.laneIndex] ?? laneIds[0];
-		await ctx.db.insert("items", {
+		const id = await ctx.db.insert("items", {
 			roadmapId,
 			laneId,
 			userId,
@@ -120,10 +131,23 @@ export async function applySnapshot(
 			values: it.values,
 			order: it.order,
 		});
+		itemIds.push(id);
 	}
 
 	for (const m of snapshot.milestones) {
 		await ctx.db.insert("milestones", { roadmapId, userId, ...m });
+	}
+
+	for (const d of snapshot.dependencies ?? []) {
+		const predecessorId = itemIds[d.predecessorIndex];
+		const successorId = itemIds[d.successorIndex];
+		if (!predecessorId || !successorId) continue;
+		await ctx.db.insert("dependencies", {
+			roadmapId,
+			userId,
+			predecessorId,
+			successorId,
+		});
 	}
 }
 

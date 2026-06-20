@@ -73,6 +73,14 @@ export const roadmapExportSchema = z.object({
 			color: z.string().optional(),
 		}),
 	),
+	dependencies: z
+		.array(
+			z.object({
+				predecessorIndex: z.number(),
+				successorIndex: z.number(),
+			}),
+		)
+		.optional(),
 });
 
 export type RoadmapExport = z.infer<typeof roadmapExportSchema>;
@@ -83,6 +91,10 @@ export function serializeRoadmap(
 	const laneIndex = new Map<Doc<"lanes">["_id"], number>();
 	bundle.lanes.forEach((lane, i) => {
 		laneIndex.set(lane._id, i);
+	});
+	const itemIndex = new Map<Doc<"items">["_id"], number>();
+	bundle.items.forEach((item, i) => {
+		itemIndex.set(item._id, i);
 	});
 	const dateKeys = new Set(
 		bundle.fields.filter((f) => f.type === "date").map((f) => f.key),
@@ -134,6 +146,14 @@ export function serializeRoadmap(
 			date: msToDateInput(m.date),
 			color: m.color,
 		})),
+		dependencies: (bundle.dependencies ?? [])
+			.filter(
+				(d) => itemIndex.has(d.predecessorId) && itemIndex.has(d.successorId),
+			)
+			.map((d) => ({
+				predecessorIndex: itemIndex.get(d.predecessorId) as number,
+				successorIndex: itemIndex.get(d.successorId) as number,
+			})),
 	};
 }
 

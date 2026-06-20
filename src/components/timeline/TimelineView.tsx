@@ -1,5 +1,6 @@
 import type { Doc } from "@convex/_generated/dataModel";
 import { useMemo, useRef, useState } from "react";
+import type { ItemRect } from "@/lib/dependencies";
 import { barColor } from "@/lib/roadmapColors";
 import {
 	buildPeriods,
@@ -15,6 +16,7 @@ import {
 	type Zoom,
 } from "@/lib/timeline";
 import { AddLaneRow } from "./AddLaneRow";
+import { DependencyLayer } from "./DependencyLayer";
 import { LaneRow } from "./LaneRow";
 import { MilestoneMarker } from "./MilestoneMarker";
 import { TimeAxis } from "./TimeAxis";
@@ -29,6 +31,7 @@ export interface TimelineBundle {
 	lanes: Doc<"lanes">[];
 	items: Doc<"items">[];
 	milestones: Doc<"milestones">[];
+	dependencies: Doc<"dependencies">[];
 }
 
 export function TimelineView({
@@ -38,6 +41,8 @@ export function TimelineView({
 	onItemDatesChange,
 	onAddItem,
 	onAddLane,
+	onRemoveDependency,
+	onCreateDependency,
 }: {
 	bundle: TimelineBundle;
 	zoom: Zoom;
@@ -50,8 +55,13 @@ export function TimelineView({
 	) => void;
 	onAddItem?: (laneId: Doc<"lanes">["_id"], startMs?: number) => void;
 	onAddLane?: (name: string) => void;
+	onRemoveDependency?: (id: Doc<"dependencies">["_id"]) => void;
+	onCreateDependency?: (
+		predecessorId: Doc<"items">["_id"],
+		successorId: Doc<"items">["_id"],
+	) => void;
 }) {
-	const { roadmap, fields, lanes, items, milestones } = bundle;
+	const { roadmap, fields, lanes, items, milestones, dependencies } = bundle;
 	const lanesRef = useRef<HTMLDivElement>(null);
 	const [guideX, setGuideX] = useState<number | null>(null);
 
@@ -70,6 +80,53 @@ export function TimelineView({
 		[lanes, items],
 	);
 	const totalHeight = layout.at(-1)?.bottom ?? 0;
+
+	const itemRects = useMemo(() => {
+		const map = new Map<string, ItemRect>();
+		for (const lane of lanes) {
+			const laneItems = items.filter((i) => i.laneId === lane._id);
+			const rows = packLanes(laneItems);
+			const bound = layout.find((b) => b.laneId === lane._id);
+			laneItems.forEach((it, i) => {
+				const g = itemGeometry(it, windowStart, windowEnd, axisWidth);
+				map.set(it._id, {
+					left: g.left,
+					width: g.width,
+					top: (bound?.top ?? 0) + rows[i] * (ROW_HEIGHT + ROW_GAP) + ROW_GAP,
+					height: ROW_HEIGHT,
+				});
+			});
+		}
+		return map;
+	}, [lanes, items, layout, windowStart, windowEnd, axisWidth]);
+
+	const itemAtClient = (clientX: number, clientY: number) => {
+		const el = lanesRef.current;
+		if (!el) return null;
+		const box = el.getBoundingClientRect();
+		const x = clientX - box.left - LABEL_WIDTH;
+		const y = clientY - box.top;
+		for (const [id, r] of itemRects) {
+			if (
+				x >= r.left &&
+				x <= r.left + r.width &&
+				y >= r.top &&
+				y <= r.top + r.height
+			) {
+				return id;
+			}
+		}
+		return null;
+	};
+
+	const handleItemLinkCommit = onCreateDependency
+		? (item: Doc<"items">, clientX: number, clientY: number) => {
+				const targetId = itemAtClient(clientX, clientY);
+				if (targetId && targetId !== item._id) {
+					onCreateDependency(item._id, targetId as Doc<"items">["_id"]);
+				}
+			}
+		: undefined;
 
 	const editable = Boolean(onItemDatesChange);
 
@@ -178,6 +235,7 @@ export function TimelineView({
 												)
 										: undefined
 								}
+								onItemLinkCommit={handleItemLinkCommit}
 							/>
 						);
 					})}
@@ -188,6 +246,17 @@ export function TimelineView({
 						className="pointer-events-none absolute top-0"
 						style={{ left: LABEL_WIDTH, width: axisWidth, height: totalHeight }}
 					>
+						<DependencyLayer
+							deps={dependencies}
+							rects={itemRects}
+							width={axisWidth}
+							height={totalHeight}
+							onRemove={
+								editable && onRemoveDependency
+									? (id) => onRemoveDependency(id as Doc<"dependencies">["_id"])
+									: undefined
+							}
+						/>
 						{guideX !== null ? (
 							<div
 								className="absolute top-0 w-px bg-blue-500"

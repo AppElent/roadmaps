@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as dependencies from "../dependencies.js";
 import type * as diagramVersions from "../diagramVersions.js";
 import type * as diagrams from "../diagrams.js";
 import type * as fields from "../fields.js";
@@ -36,6 +37,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  dependencies: typeof dependencies;
   diagramVersions: typeof diagramVersions;
   diagrams: typeof diagrams;
   fields: typeof fields;

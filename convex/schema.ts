@@ -78,6 +78,14 @@ export const roadmapSnapshotValidator = v.object({
 			color: v.optional(v.string()),
 		}),
 	),
+	dependencies: v.optional(
+		v.array(
+			v.object({
+				predecessorIndex: v.number(),
+				successorIndex: v.number(),
+			}),
+		),
+	),
 });
 
 export const diagramTypeValidator = v.union(
@@ -151,6 +159,16 @@ export default defineSchema({
 		date: v.number(),
 		color: v.optional(v.string()),
 	}).index("by_roadmap", ["roadmapId"]),
+
+	dependencies: defineTable({
+		roadmapId: v.id("roadmaps"),
+		userId: v.string(),
+		predecessorId: v.id("items"),
+		successorId: v.id("items"),
+	})
+		.index("by_roadmap", ["roadmapId"])
+		.index("by_predecessor", ["predecessorId"])
+		.index("by_successor", ["successorId"]),
 
 	roadmapVersions: defineTable({
 		roadmapId: v.id("roadmaps"),
