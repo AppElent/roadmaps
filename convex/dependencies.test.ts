@@ -150,3 +150,45 @@ test("deleting an item removes dependencies referencing it", async () => {
 		.query(api.roadmaps.getBundle, { roadmapId });
 	expect(bundle.dependencies).toEqual([]);
 });
+
+test("dependencies survive a version snapshot + restore", async () => {
+	const t = convexTest(schema, modules);
+	const { roadmapId, mkItem } = await setup(t);
+	const a = await mkItem("A");
+	const b = await mkItem("B");
+	await t
+		.withIdentity({ subject: "user_alex" })
+		.mutation(api.dependencies.create, {
+			roadmapId,
+			predecessorId: a,
+			successorId: b,
+		});
+	await t
+		.withIdentity({ subject: "user_alex" })
+		.mutation(api.roadmapVersions.create, { roadmapId, label: "snap" });
+	// Mutate current state: delete the dependency.
+	const mid = await t
+		.withIdentity({ subject: "user_alex" })
+		.query(api.roadmaps.getBundle, { roadmapId });
+	await t
+		.withIdentity({ subject: "user_alex" })
+		.mutation(api.dependencies.remove, {
+			dependencyId: mid.dependencies[0]._id,
+		});
+	const versions = await t
+		.withIdentity({ subject: "user_alex" })
+		.query(api.roadmapVersions.list, { roadmapId });
+	const snap = versions.find((v) => v.label === "snap");
+	if (!snap) throw new Error("snapshot missing");
+	await t
+		.withIdentity({ subject: "user_alex" })
+		.mutation(api.roadmapVersions.restore, { versionId: snap._id });
+	const after = await t
+		.withIdentity({ subject: "user_alex" })
+		.query(api.roadmaps.getBundle, { roadmapId });
+	expect(after.dependencies).toHaveLength(1);
+	const itemTitle = (id: typeof a) =>
+		after.items.find((i) => i._id === id)?.title;
+	expect(itemTitle(after.dependencies[0].predecessorId)).toBe("A");
+	expect(itemTitle(after.dependencies[0].successorId)).toBe("B");
+});
