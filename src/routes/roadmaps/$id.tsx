@@ -205,6 +205,8 @@ function RoadmapEditor() {
 					item={editingItem}
 					fields={bundle.fields}
 					lanes={bundle.lanes}
+					allItems={bundle.items}
+					dependencies={bundle.dependencies}
 					windowStart={bundle.roadmap.startDate}
 					presetLaneId={newItem?.laneId}
 					presetStartMs={newItem?.startMs}

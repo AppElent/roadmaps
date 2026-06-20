@@ -58,6 +58,8 @@ export function ItemEditorPanel({
 	item,
 	fields,
 	lanes,
+	allItems,
+	dependencies,
 	windowStart,
 	presetLaneId,
 	presetStartMs,
@@ -67,6 +69,8 @@ export function ItemEditorPanel({
 	item: Doc<"items"> | null;
 	fields: Doc<"fields">[];
 	lanes: Doc<"lanes">[];
+	allItems: Doc<"items">[];
+	dependencies: Doc<"dependencies">[];
 	windowStart: number;
 	presetLaneId?: Id<"lanes">;
 	presetStartMs?: number;
@@ -75,6 +79,9 @@ export function ItemEditorPanel({
 	const createItem = useMutation(api.items.create);
 	const updateItem = useMutation(api.items.update);
 	const removeItem = useMutation(api.items.remove);
+	const createDependency = useMutation(api.dependencies.create);
+	const removeDependency = useMutation(api.dependencies.remove);
+	const [depError, setDepError] = useState<string | null>(null);
 	const [draft, setDraft] = useState<ItemDraft>(() =>
 		draftFromItem(
 			item,
@@ -136,6 +143,37 @@ export function ItemEditorPanel({
 
 	const set = <K extends keyof ItemDraft>(key: K, value: ItemDraft[K]) =>
 		setDraft((d) => ({ ...d, [key]: value }));
+
+	const predecessorIds = new Set(
+		item
+			? dependencies
+					.filter((d) => d.successorId === item._id)
+					.map((d) => d.predecessorId)
+			: [],
+	);
+
+	async function togglePredecessor(predecessorId: Id<"items">) {
+		if (!item) return;
+		setDepError(null);
+		const existing = dependencies.find(
+			(d) => d.successorId === item._id && d.predecessorId === predecessorId,
+		);
+		try {
+			if (existing) {
+				await removeDependency({ dependencyId: existing._id });
+			} else {
+				await createDependency({
+					roadmapId,
+					predecessorId,
+					successorId: item._id,
+				});
+			}
+		} catch (e) {
+			setDepError(
+				e instanceof Error ? e.message : "Could not update dependency",
+			);
+		}
+	}
 
 	return (
 		<div className="fixed inset-y-0 right-0 z-40 flex w-[min(420px,100vw)] flex-col border-l border-neutral-200 bg-white shadow-xl">
@@ -221,6 +259,37 @@ export function ItemEditorPanel({
 						onChange={(e) => set("description", e.target.value)}
 					/>
 				</label>
+
+				{item ? (
+					<div className="block text-sm">
+						<span className="text-neutral-700">Depends on</span>
+						<div className="mt-1 max-h-40 space-y-1 overflow-auto rounded-md border border-neutral-200 p-2">
+							{allItems.filter((other) => other._id !== item._id).length ===
+							0 ? (
+								<p className="text-xs text-neutral-500">No other items</p>
+							) : (
+								allItems
+									.filter((other) => other._id !== item._id)
+									.map((other) => (
+										<label
+											key={other._id}
+											className="flex items-center gap-2 text-xs"
+										>
+											<input
+												type="checkbox"
+												checked={predecessorIds.has(other._id)}
+												onChange={() => togglePredecessor(other._id)}
+											/>
+											<span className="truncate">{other.title}</span>
+										</label>
+									))
+							)}
+						</div>
+						{depError ? (
+							<p className="mt-1 text-xs text-red-600">{depError}</p>
+						) : null}
+					</div>
+				) : null}
 
 				{error ? <p className="text-xs text-red-600">{error}</p> : null}
 			</div>
