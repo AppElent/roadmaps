@@ -192,3 +192,30 @@ test("dependencies survive a version snapshot + restore", async () => {
 	expect(itemTitle(after.dependencies[0].predecessorId)).toBe("A");
 	expect(itemTitle(after.dependencies[0].successorId)).toBe("B");
 });
+
+test("duplicate clones dependencies onto the new items", async () => {
+	const t = convexTest(schema, modules);
+	const { roadmapId, mkItem } = await setup(t);
+	const a = await mkItem("A");
+	const b = await mkItem("B");
+	await t
+		.withIdentity({ subject: "user_alex" })
+		.mutation(api.dependencies.create, {
+			roadmapId,
+			predecessorId: a,
+			successorId: b,
+		});
+	const newId = await t
+		.withIdentity({ subject: "user_alex" })
+		.mutation(api.roadmaps.duplicate, { roadmapId });
+	const copy = await t
+		.withIdentity({ subject: "user_alex" })
+		.query(api.roadmaps.getBundle, { roadmapId: newId });
+	expect(copy.dependencies).toHaveLength(1);
+	const title = (id: (typeof copy.items)[number]["_id"]) =>
+		copy.items.find((i) => i._id === id)?.title;
+	expect(title(copy.dependencies[0].predecessorId)).toBe("A");
+	expect(title(copy.dependencies[0].successorId)).toBe("B");
+	// The clone references the NEW items, not the originals.
+	expect(copy.dependencies[0].predecessorId).not.toBe(a);
+});

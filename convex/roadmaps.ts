@@ -179,8 +179,9 @@ export const duplicate = mutation({
 			});
 			laneIdMap.set(l._id, cloneId);
 		}
+		const itemIdMap = new Map<Id<"items">, Id<"items">>();
 		for (const it of children.items) {
-			await ctx.db.insert("items", {
+			const cloneId = await ctx.db.insert("items", {
 				roadmapId: newId,
 				laneId: laneIdMap.get(it.laneId) as Id<"lanes">,
 				userId,
@@ -191,6 +192,7 @@ export const duplicate = mutation({
 				values: it.values,
 				order: it.order,
 			});
+			itemIdMap.set(it._id, cloneId);
 		}
 		for (const m of children.milestones) {
 			await ctx.db.insert("milestones", {
@@ -199,6 +201,17 @@ export const duplicate = mutation({
 				name: m.name,
 				date: m.date,
 				color: m.color,
+			});
+		}
+		for (const d of children.dependencies) {
+			const predecessorId = itemIdMap.get(d.predecessorId);
+			const successorId = itemIdMap.get(d.successorId);
+			if (!predecessorId || !successorId) continue;
+			await ctx.db.insert("dependencies", {
+				roadmapId: newId,
+				userId,
+				predecessorId,
+				successorId,
 			});
 		}
 		return newId;
