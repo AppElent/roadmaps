@@ -1,4 +1,4 @@
-# `review-app` global skill — design
+# `custom-review-app` global skill — design
 
 ## Purpose
 
@@ -6,8 +6,8 @@ A global Claude Code skill (available in every project, not just this repo) that
 
 ## Location & invocation
 
-- File: `C:\Users\ericj\.claude\skills\review-app\SKILL.md` (global, alongside `custom-review-session` and `webapp-testing`).
-- Invoked as `/review-app [scope]`, or naturally when the user asks to "review the app," "run an e2e review," "find bugs automatically," or "test what we just built."
+- File: `C:\Users\ericj\.claude\skills\custom-review-app\SKILL.md` (global, alongside `custom-review-session`, `custom-bootstrap`, `custom-upgrade-deps`, and `webapp-testing`).
+- Invoked as `/custom-review-app [scope]`, or naturally when the user asks to "review the app," "run an e2e review," "find bugs automatically," or "test what we just built."
 - `scope` is optional free text (see **Scope argument** below).
 
 ## Mechanism
