@@ -140,7 +140,7 @@ export function ItemBar({
 					: { borderLeftColor: color }),
 			}}
 			className={cn(
-				"group absolute flex h-9 items-center overflow-hidden rounded-md border px-2 text-left text-xs shadow-sm",
+				"group absolute flex h-9 items-center rounded-md border px-2 text-left text-xs shadow-sm",
 				fill ? "border" : "border-l-4 border-neutral-200 bg-white",
 				editable
 					? "cursor-grab hover:border-neutral-400 active:cursor-grabbing"
@@ -151,14 +151,14 @@ export function ItemBar({
 			{editable ? (
 				<span
 					onPointerDown={(e) => begin("resize-start", e)}
-					className="absolute inset-y-0 left-0 w-1.5 cursor-ew-resize"
+					className="absolute inset-y-0 left-0 w-1.5 cursor-ew-resize before:absolute before:inset-y-1.5 before:left-1/2 before:w-0.5 before:-translate-x-1/2 before:rounded-full before:bg-neutral-400 before:opacity-0 before:content-[''] group-hover:before:opacity-100"
 				/>
 			) : null}
-			<span className="block truncate font-medium">{item.title}</span>
+			<span className="min-w-0 flex-1 truncate font-medium">{item.title}</span>
 			{editable ? (
 				<span
 					onPointerDown={(e) => begin("resize-end", e)}
-					className="absolute inset-y-0 right-0 w-1.5 cursor-ew-resize"
+					className="absolute inset-y-0 right-0 w-1.5 cursor-ew-resize before:absolute before:inset-y-1.5 before:left-1/2 before:w-0.5 before:-translate-x-1/2 before:rounded-full before:bg-neutral-400 before:opacity-0 before:content-[''] group-hover:before:opacity-100"
 				/>
 			) : null}
 			{onLinkCommit ? (
@@ -166,10 +166,11 @@ export function ItemBar({
 					type="button"
 					tabIndex={-1}
 					aria-label="Link to another item"
+					title="Drag to link this item to another"
 					onPointerDown={linkBegin}
 					onPointerMove={linkMove}
 					onPointerUp={linkEnd}
-					className="absolute -right-1 top-1/2 hidden h-3 w-3 -translate-y-1/2 cursor-crosshair rounded-full border border-neutral-400 bg-white p-0 group-hover:block"
+					className="absolute -right-3.5 top-1/2 hidden h-3.5 w-3.5 -translate-y-1/2 cursor-crosshair rounded-full border-2 border-blue-500 bg-white p-0 shadow-sm group-hover:block dark:bg-neutral-900"
 				/>
 			) : null}
 		</div>
