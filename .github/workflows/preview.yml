@@ -15,19 +15,28 @@ jobs:
     permissions:
       pull-requests: write
       contents: read
+      packages: read
     env:
       WORKER_NAME: archstudio-pr-${{ github.event.pull_request.number }}
       CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
       VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.PREVIEW_CLERK_PUBLISHABLE_KEY }}
     steps:
       - uses: actions/checkout@v4
-
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
+      # @appelent/* is a private GitHub Packages scope — pnpm won't expand env
+      # vars from the committed .npmrc, so write the token to the runner's
+      # user-level ~/.npmrc instead.
+      - name: Configure GitHub Packages auth
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN || secrets.GITHUB_TOKEN }}
+        run: echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
+
+      - run: pnpm install --frozen-lockfile
 
       # Convex provisions/refreshes preview backend pr-<N>, exposes its URL as
       # $CONVEX_URL inside --cmd, runs the build (we bridge CONVEX_URL ->
@@ -35,10 +44,10 @@ jobs:
       # runs the seed against the fresh backend.
       - name: Convex preview deploy + build + seed
         run: |
-          npx convex deploy \
+          pnpm exec convex deploy \
             --preview-create pr-${{ github.event.pull_request.number }} \
             --cmd-url-env-var-name CONVEX_URL \
-            --cmd 'VITE_CONVEX_URL=$CONVEX_URL VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY npm run build' \
+            --cmd 'VITE_CONVEX_URL=$CONVEX_URL VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY pnpm build' \
             --preview-run seed:seedDemo
       - name: Deploy Worker (per-PR)
         id: deploy
@@ -52,8 +61,10 @@ jobs:
           # --var overrides runtime bindings so the per-PR Worker runtime matches
           # the per-PR bundle (otherwise top-level wrangler.jsonc bakes the
           # production Clerk/Convex values onto the preview Worker).
-          npx wrangler deploy \
+          pnpm exec wrangler deploy \
             --name "$WORKER_NAME" \
+            --var "VITE_CLERK_PUBLISHABLE_KEY:$VITE_CLERK_PUBLISHABLE_KEY" \
+            --var "environment_name:preview" \
             2>&1 | tee /tmp/wrangler-deploy.log
           URL=$(grep -oE 'https://[^ ]+workers\.dev' /tmp/wrangler-deploy.log | head -1)
           echo "url=$URL" >> $GITHUB_OUTPUT
@@ -92,20 +103,28 @@ jobs:
   cleanup:
     if: github.event.action == 'closed'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v4
-
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
+      - name: Configure GitHub Packages auth
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN || secrets.GITHUB_TOKEN }}
+        run: echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
+
+      - run: pnpm install --frozen-lockfile
 
       - name: Delete Worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler delete --name "archstudio-pr-${{ github.event.pull_request.number }}" || true
+        run: pnpm exec wrangler delete --name "archstudio-pr-${{ github.event.pull_request.number }}" || true
       # Convex preview deployments idle-expire automatically (~14 days).
       # No stable CLI delete command today; prune from the dashboard if needed.

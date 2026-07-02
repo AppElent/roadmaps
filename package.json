@@ -2,12 +2,18 @@
   "name": "archstudio",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=11"
+  },
   "imports": {
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "vite dev --port 3000 --host",
-    "dev:all": "npx convex dev --once && npm run dev",
+    "dev": "vite dev --host",
+    "dev:all": "pnpm exec convex dev --once && pnpm dev",
+    "dev:watch": "concurrently -n convex,vite -c blue,green \"pnpm exec convex dev\" \"pnpm dev\"",
     "generate-routes": "tsr generate",
     "build": "vite build",
     "build:development": "vite build --mode development",
@@ -16,17 +22,20 @@
     "test": "vitest run",
     "format": "biome format",
     "lint": "biome lint",
-    "lint:fix": "<lint> --fix",
+    "lint:fix": "biome check --write",
     "check": "biome check",
-    "deploy": "npm run deploy:prod",
-    "seed": "npx convex run seed:seedDemo",
-    "deploy:dev": "npx convex dev --once && npm run build:development && wrangler deploy --env dev",
-    "deploy:prod": "npx convex deploy && npm run build && wrangler deploy"
+    "cf-typegen": "wrangler types",
+    "deploy": "pnpm run deploy:prod",
+    "seed": "pnpm exec convex run seed:seedDemo",
+    "deploy:dev": "pnpm exec convex dev --once && pnpm run build:development && wrangler deploy --env dev",
+    "deploy:prod": "pnpm exec convex deploy && pnpm run build && wrangler deploy"
   },
   "dependencies": {
     "@appelent/auth": "^0.1.0",
     "@clerk/clerk-react": "^5.61.3",
     "@cloudflare/vite-plugin": "^1.26.0",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.43.1",
     "@convex-dev/react-query": "0.1.0",
     "@t3-oss/env-core": "^0.13.10",
     "@tailwindcss/vite": "^4.1.18",
@@ -72,16 +81,11 @@
     "typescript": "^6.0.2",
     "vite": "^8.0.0",
     "vitest": "^4.1.5",
-    "wrangler": "^4.99.0"
+    "wrangler": "^4.99.0",
+    "concurrently": "^9.1.2"
   },
   "overrides": {
     "esbuild": "^0.28.1",
     "ws": "^8.21.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "lightningcss"
-    ]
   }
 }

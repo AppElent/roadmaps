@@ -1,0 +1,19 @@
+onlyBuiltDependencies:
+  - esbuild # bundler, compiles/downloads a native binary
+  - lightningcss # CSS transformer, native binary
+  - workerd # Cloudflare Workers runtime binary (@cloudflare/vite-plugin)
+  - sharp # image processing, native binary
+
+minimumReleaseAge: 4320 # 3 days — blocks the worm/account-takeover window
+minimumReleaseAgeExclude:
+  - "@appelent/*" # our own registry, always trusted
+
+# Persisted `pnpm approve-builds` decisions (pnpm 11 records these here,
+# separately from onlyBuiltDependencies above).
+allowBuilds:
+  # postinstall only prints a Clerk telemetry notice, no native compile —
+  # denied per default-deny policy.
+  '@clerk/shared': false
+  esbuild: true
+  sharp: true
+  workerd: true

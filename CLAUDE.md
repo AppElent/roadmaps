@@ -7,19 +7,20 @@ ArchStudio is a real-time **architect's workbench**: a multi-tool app where `/da
 ## Commands
 
 ```bash
-npx convex dev        # Start the Convex backend (watch mode). REQUIRED for any data to load.
-npm run dev           # Vite dev server on :3000. Run alongside `npx convex dev`.
-npx convex dev --once # Deploy backend once + typecheck convex/ + regenerate convex/_generated. Run after editing anything in convex/.
+pnpm exec convex dev        # Start the Convex backend (watch mode). REQUIRED for any data to load.
+pnpm dev                    # Vite dev server on :3000. Run alongside `pnpm exec convex dev`.
+pnpm exec convex dev --once # Deploy backend once + typecheck convex/ + regenerate convex/_generated. Run after editing anything in convex/.
+pnpm run dev:watch          # Both of the above concurrently (uses `concurrently`) — re-pushes Convex functions on every edit.
 
-npm run test          # Vitest (all). Single file: npx vitest run src/lib/__tests__/timeline.test.ts
-npm run check         # Biome lint + format check — MUST pass before committing. Autofix: npx biome check --write src/
-npx tsc --noEmit      # Full type check (Biome does NOT type-check)
-npm run build         # Production/SSR build (also the best smoke test that the app compiles)
-npm run seed          # Seed demo data (npx convex run seed:seedDemo)
-npm run deploy        # Build + wrangler deploy to Cloudflare
+pnpm test             # Vitest (all). Single file: pnpm exec vitest run src/lib/__tests__/timeline.test.ts
+pnpm run check        # Biome lint + format check — MUST pass before committing. Autofix: pnpm exec biome check --write src/
+pnpm exec tsc --noEmit # Full type check (Biome does NOT type-check)
+pnpm build            # Production/SSR build (also the best smoke test that the app compiles)
+pnpm run seed         # Seed demo data (pnpm exec convex run seed:seedDemo)
+pnpm run deploy       # Build + wrangler deploy to Cloudflare
 ```
 
-There is no `dev:all` script — run `npx convex dev` and `npm run dev` in two terminals. Without the Convex process, `useQuery` hooks never resolve.
+Package manager is **pnpm** (always — never npm/yarn; see `pnpm-workspace.yaml` for supply-chain hardening settings). `dev:all` pushes Convex functions **once** then starts Vite; use `dev:watch` when actively editing `convex/` so backend changes re-sync.
 
 ## Architecture
 
@@ -29,7 +30,7 @@ Two layers in one repo:
 
 **The app shell.** `/` is a public, standalone landing route (outside `AppShell`). `/dashboard` is the authed Home launcher — a grid of `ToolCard`s. Each tool lives in its own section: Roadmaps at `/roadmaps/` (list) and `/roadmaps/$id` (editor); Diagrams at `/diagrams/` (list) and `/diagrams/$id` (editor). `Sidebar.tsx` / `BottomTabBar.tsx` nav = Home / Roadmaps / Diagrams. `AppShell` gates the authed sections (`<SignedIn>` / `<RedirectToSignIn>`).
 
-**Data flow:** `Clerk (auth) → JWT → Convex → useQuery subscriptions → React`. The Clerk provider wraps the Convex provider (`src/integrations/convex/provider.tsx` uses `ConvexProviderWithClerk`). `convex/auth.config.ts` reads `CLERK_JWT_ISSUER_DOMAIN` from the Convex backend's own env (set via `npx convex env set`, not committed) and requires a Clerk JWT template named `convex`.
+**Data flow:** `Clerk (auth) → JWT → Convex → useQuery subscriptions → React`. The Clerk provider wraps the Convex provider (`src/integrations/convex/provider.tsx` uses `ConvexProviderWithClerk`). `convex/auth.config.ts` reads `CLERK_JWT_ISSUER_DOMAIN` from the Convex backend's own env (set via `pnpm exec convex env set`, not committed) and requires a Clerk JWT template named `convex`.
 
 **The single-subscription bundle.** The editor loads one query — `roadmaps.getBundle({ roadmapId })` — returning `{ roadmap, fields, lanes, items, milestones }` together (loader in `convex/lib/bundle.ts`). The whole editor subscribes to this one query, so any mutation pushes an atomic real-time snapshot. The public share path mirrors it: `sharing.getPublicRoadmap({ shareToken })` returns the same shape with **no auth** (the only unauthenticated function) and only for `visibility === "link"`.
 
@@ -52,16 +53,19 @@ Two layers in one repo:
 ## Conventions & gotchas
 
 - **Authed `useQuery` must gate on `useConvexAuth()`.** On a cold load (deep link / hard refresh), `ConvexProviderWithClerk` calls `client.setAuth(...)` only *after* Clerk's session resolves, but a `useQuery` at the top of the component fires immediately — so the first query goes out unauthenticated and `requireUser` throws "Not authenticated". `<SignedIn>` in `AppShell` doesn't help (the query runs above that gate). Gate every authed query with the `"skip"` sentinel until auth settles: `const { isAuthenticated } = useConvexAuth(); useQuery(api.x.y, isAuthenticated ? args : "skip")`. The `undefined` return covers the gap via the existing "Loading…" branch. The public share route is exempt (intentionally unauthenticated).
-- **Biome** (not ESLint/Prettier): **tab** indentation, **double** quotes. Run `npm run check` before every commit. `src/routeTree.gen.ts` and `src/styles.css` are lint-excluded — never add lint-disable comments there. `design files/**` is excluded too.
+- **Biome** (not ESLint/Prettier): **tab** indentation, **double** quotes. Run `pnpm run check` before every commit. `src/routeTree.gen.ts` and `src/styles.css` are lint-excluded — never add lint-disable comments there. `design files/**` is excluded too.
 - **Path aliases:** `@/*` and `#/*` → `src/`; `@convex/*` → `convex/`. Import generated types as `@convex/_generated/api` and `@convex/_generated/dataModel`.
-- **`convex/_generated/` and `src/routeTree.gen.ts` are auto-generated** — never edit by hand. They regenerate via `npx convex dev` and `npx tsr generate` (or `npm run dev`). Commit the regenerated output with the change that caused it.
+- **`convex/_generated/` and `src/routeTree.gen.ts` are auto-generated** — never edit by hand. They regenerate via `pnpm exec convex dev` and `pnpm exec tsr generate` (or `pnpm dev`). Commit the regenerated output with the change that caused it.
 - **Convex backend tests** use `convex-test` and live in `convex/*.test.ts` with `const modules = import.meta.glob("./**/*.ts")`. `convex/tsconfig.json` **excludes `**/*.test.ts`** (so TDD tests referencing not-yet-built functions don't fail the deploy typecheck) and sets `"types": ["node"]` (for `process.env` in `auth.config.ts`).
-- **Component tests** opt into the DOM with a top-of-file `// @vitest-environment jsdom` docblock; `vitest.config.ts` defaults to the `node` environment.
-- **Line endings:** `.gitattributes` pins `* text=auto eol=lf`. Biome enforces LF; without this, Windows autocrlf breaks `npm run check` after branch switches.
+- **Component tests** opt into the DOM with a top-of-file `// @vitest-environment jsdom` docblock; `vitest.config.ts` defaults to the `node` environment. `test.exclude` also excludes `.claude/worktrees/**` and stray `node_modules_OLD`/`node_modules.*` dirs so parallel Claude Code worktrees don't register as phantom test suites.
+- **Line endings:** `.gitattributes` pins `* text=auto eol=lf`. Biome enforces LF; without this, Windows autocrlf breaks `pnpm run check` after branch switches.
 - **Forms:** TanStack Form + Zod. **UI primitives:** `radix-ui` (unified package — `import { Dialog } from "radix-ui"`). **Icons:** Lucide only. **Dates:** date-fns. Merge classes with `cn()` from `src/lib/utils.ts`.
 - **Theming:** light/dark via CSS variables in `src/styles.css`; `__root.tsx`'s `THEME_INIT_SCRIPT` sets `.light`/`.dark` on `<html>` before paint. Roadmap-specific tokens are `--rm-*`; shared classes `rm-btn-primary` / `rm-panel` / `rm-label`.
 - **Convex schema** (from `.cursorrules`): use the `v` validator builder; `_id`/`_creationTime` are automatic system fields (don't declare or index them). Add new shadcn components via `pnpm dlx shadcn@latest add <name>`.
+- **`@appelent/auth`** (shared Clerk/Convex auth glue, private GitHub Packages scope `@appelent`) is a direct dependency — `.npmrc` maps the scope to the registry; the auth token itself lives only in the user-level `~/.npmrc` (never commit it) or, in CI, is written per-job from the `NODE_AUTH_TOKEN`/`GITHUB_TOKEN` secret.
 
 ## Environment
 
-`VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CONVEX_URL`, `CONVEX_DEPLOYMENT` live in `.env.local` (gitignored). `CLERK_JWT_ISSUER_DOMAIN` is set on the **Convex** deployment (`npx convex env set`), not in the repo. Deployed env vars go in `wrangler.jsonc`.
+`VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CONVEX_URL`, `CONVEX_DEPLOYMENT` live in `.env.local` (gitignored). `CLERK_JWT_ISSUER_DOMAIN` is set on the **Convex** deployment (`pnpm exec convex env set`; a preview-deployment default is also set via `pnpm exec convex env default set ... --type preview`), not in the repo. Deployed env vars go in `wrangler.jsonc`.
+
+Deploy target is **Cloudflare Workers**; the wrangler app name is `archstudio` (`archstudio-dev` for the `env.dev` config, `archstudio-pr-<N>` for PR previews — see `.github/workflows/preview.yml`). Package manager is **pnpm**, pinned via `packageManager` in `package.json`.

@@ -6,6 +6,7 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 const config = defineConfig({
+	server: { port: process.env.PORT ? Number(process.env.PORT) : 3000 },
 	resolve: { tsconfigPaths: true },
 	plugins: [
 		devtools(),
