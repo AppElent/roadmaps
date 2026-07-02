@@ -2,6 +2,7 @@ import { api } from "@convex/_generated/api";
 import type { Doc } from "@convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { Dialog } from "radix-ui";
+import { DialogCloseButton } from "@/components/ui/dialog-close";
 import { dateInputToMs, msToDateInput } from "@/lib/fields";
 import type { Zoom } from "@/lib/timeline";
 
@@ -30,6 +31,7 @@ export function RoadmapSettingsDialog({
 			<Dialog.Portal>
 				<Dialog.Overlay className="fixed inset-0 z-40 bg-black/30" />
 				<Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(480px,92vw)] -translate-x-1/2 -translate-y-1/2 space-y-3 rounded-lg border border-neutral-200 bg-white p-5 shadow-xl">
+					<DialogCloseButton />
 					<Dialog.Title className="text-base font-semibold">
 						Roadmap settings
 					</Dialog.Title>

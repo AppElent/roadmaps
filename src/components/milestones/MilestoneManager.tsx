@@ -4,6 +4,7 @@ import { useMutation } from "convex/react";
 import { Plus, Trash2 } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useState } from "react";
+import { DialogCloseButton } from "@/components/ui/dialog-close";
 import { dateInputToMs, msToDateInput } from "@/lib/fields";
 
 export function MilestoneManager({
@@ -28,6 +29,7 @@ export function MilestoneManager({
 			<Dialog.Portal>
 				<Dialog.Overlay className="fixed inset-0 z-40 bg-black/30" />
 				<Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(480px,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-neutral-200 bg-white p-5 shadow-xl">
+					<DialogCloseButton />
 					<Dialog.Title className="text-base font-semibold">
 						Milestones
 					</Dialog.Title>

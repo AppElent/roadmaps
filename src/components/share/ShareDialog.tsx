@@ -3,6 +3,7 @@ import type { Doc, Id } from "@convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { Copy } from "lucide-react";
 import { Dialog } from "radix-ui";
+import { DialogCloseButton } from "@/components/ui/dialog-close";
 
 export function ShareDialog({
 	roadmap,
@@ -26,6 +27,7 @@ export function ShareDialog({
 			<Dialog.Portal>
 				<Dialog.Overlay className="fixed inset-0 z-40 bg-black/30" />
 				<Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(480px,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-neutral-200 bg-white p-5 shadow-xl">
+					<DialogCloseButton />
 					<Dialog.Title className="text-base font-semibold">
 						Share roadmap
 					</Dialog.Title>
