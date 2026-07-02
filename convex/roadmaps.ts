@@ -7,13 +7,14 @@ import { DEFAULT_STATUS_OPTIONS, STATUS_FIELD_KEY } from "./lib/defaults";
 import { barColorModeValidator, zoomValidator } from "./schema";
 
 export const list = query({
-	args: {},
-	handler: async (ctx) => {
+	args: { archived: v.optional(v.boolean()) },
+	handler: async (ctx, args) => {
 		const userId = await requireUser(ctx);
+		const archived = args.archived ?? false;
 		const roadmaps = await ctx.db
 			.query("roadmaps")
 			.withIndex("by_user_archived", (q) =>
-				q.eq("userId", userId).eq("archived", false),
+				q.eq("userId", userId).eq("archived", archived),
 			)
 			.collect();
 		return await Promise.all(
