@@ -1,5 +1,5 @@
 import type { Doc } from "@convex/_generated/dataModel";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ItemRect } from "@/lib/dependencies";
 import { barColor } from "@/lib/roadmapColors";
 import {
@@ -7,6 +7,7 @@ import {
 	columnWidth,
 	type DragMode,
 	dateToX,
+	fitColumnWidth,
 	itemGeometry,
 	laneAtY,
 	laneLayout,
@@ -62,13 +63,33 @@ export function TimelineView({
 	) => void;
 }) {
 	const { roadmap, fields, lanes, items, milestones, dependencies } = bundle;
+	const scrollRef = useRef<HTMLDivElement>(null);
 	const lanesRef = useRef<HTMLDivElement>(null);
 	const [guideX, setGuideX] = useState<number | null>(null);
+	const [containerWidth, setContainerWidth] = useState(0);
 
-	const colW = columnWidth(zoom);
 	const periods = useMemo(
 		() => buildPeriods(roadmap.startDate, roadmap.endDate, zoom),
 		[roadmap.startDate, roadmap.endDate, zoom],
+	);
+
+	useEffect(() => {
+		const el = scrollRef.current;
+		if (!el) return;
+		const ro = new ResizeObserver((entries) => {
+			setContainerWidth(entries[0].contentRect.width);
+		});
+		ro.observe(el);
+		return () => ro.disconnect();
+	}, []);
+
+	// Stretch columns to fill the container at low column counts; fall back to
+	// the per-zoom base width (which scrolls) at high counts. The -2 buffer keeps
+	// subpixel rounding from triggering a stray horizontal scrollbar.
+	const colW = fitColumnWidth(
+		columnWidth(zoom),
+		periods.length,
+		containerWidth - LABEL_WIDTH - 2,
 	);
 	const axisWidth = periods.length * colW;
 	const windowStart = periods[0]?.start ?? roadmap.startDate;
@@ -187,7 +208,10 @@ export function TimelineView({
 		: undefined;
 
 	return (
-		<div className="overflow-auto rounded-lg border border-neutral-200 bg-white">
+		<div
+			ref={scrollRef}
+			className="overflow-auto rounded-lg border border-neutral-200 bg-white"
+		>
 			<div style={{ width: LABEL_WIDTH + axisWidth }}>
 				<TimeAxis
 					periods={periods}

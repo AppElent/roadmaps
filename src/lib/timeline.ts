@@ -250,16 +250,38 @@ export function yearBands(
 	return bands;
 }
 
-/** Per-zoom column width in px. Narrower than the old fixed 140 to reduce horizontal scroll. */
+/**
+ * Per-zoom column width in px — the minimum width a column is allowed to take.
+ * Kept tight (labels are ≤3 chars: "Jan", "Q1", "W23", "H1") so that at high
+ * column counts more of the timeline is visible before horizontal scroll kicks
+ * in. At low column counts {@link fitColumnWidth} stretches columns past this
+ * floor to fill the available width.
+ */
 export function columnWidth(zoom: Zoom): number {
 	switch (zoom) {
 		case "week":
-			return 104;
+			return 80;
 		case "month":
-			return 116;
+			return 88;
 		case "quarter":
-			return 96;
+			return 76;
 		case "half":
-			return 96;
+			return 76;
 	}
+}
+
+/**
+ * Resolve the effective column width for rendering. When the columns at their
+ * base width would leave empty space in the container, stretch them evenly to
+ * fill it (no large trailing gap); otherwise keep the base width so the axis
+ * scrolls. `availableAxisWidth` is the container width minus the lane-label
+ * gutter. Returns `baseColW` when measurements aren't ready yet.
+ */
+export function fitColumnWidth(
+	baseColW: number,
+	periodCount: number,
+	availableAxisWidth: number,
+): number {
+	if (periodCount <= 0 || availableAxisWidth <= 0) return baseColW;
+	return Math.max(baseColW, availableAxisWidth / periodCount);
 }

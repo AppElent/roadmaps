@@ -3,6 +3,7 @@ import {
 	buildPeriods,
 	columnWidth,
 	dateToX,
+	fitColumnWidth,
 	itemGeometry,
 	laneAtY,
 	laneLayout,
@@ -166,10 +167,25 @@ test("yearBands groups consecutive periods by calendar year", () => {
 });
 
 test("columnWidth returns the per-zoom width", () => {
-	expect(columnWidth("week")).toBe(104);
-	expect(columnWidth("month")).toBe(116);
-	expect(columnWidth("quarter")).toBe(96);
-	expect(columnWidth("half")).toBe(96);
+	expect(columnWidth("week")).toBe(80);
+	expect(columnWidth("month")).toBe(88);
+	expect(columnWidth("quarter")).toBe(76);
+	expect(columnWidth("half")).toBe(76);
+});
+
+test("fitColumnWidth stretches columns to fill extra space at low counts", () => {
+	// 4 columns at base 96 = 384px, but 800px available → stretch to 200px each
+	expect(fitColumnWidth(96, 4, 800)).toBe(200);
+});
+
+test("fitColumnWidth keeps the base width when columns overflow the container", () => {
+	// 24 columns at base 80 = 1920px > 800px available → no stretch, scrolls
+	expect(fitColumnWidth(80, 24, 800)).toBe(80);
+});
+
+test("fitColumnWidth falls back to base width before measurement is ready", () => {
+	expect(fitColumnWidth(88, 0, 0)).toBe(88);
+	expect(fitColumnWidth(88, 5, 0)).toBe(88);
 });
 
 test("resolveDrag at half zoom snaps to month boundaries", () => {
