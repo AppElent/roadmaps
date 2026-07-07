@@ -15,4 +15,5 @@ __unconfig*
 todos.json
 .superpowers/
 .claude/settings.local.json
+.claude/worktrees/
 CLAUDE.local.md

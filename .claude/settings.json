@@ -1,0 +1,30 @@
+{
+	"hooks": {
+		"SessionStart": [
+			{
+				"hooks": [
+					{ "type": "command", "command": "node .claude/hooks/session-start.mjs" }
+				]
+			}
+		]
+	},
+	"permissions": {
+		"allow": [
+			"Bash(pnpm test)",
+			"Bash(pnpm test:*)",
+			"Bash(pnpm run check)",
+			"Bash(pnpm run check:*)",
+			"Bash(pnpm run typecheck)",
+			"Bash(pnpm run lint)",
+			"Bash(pnpm run lint:fix)",
+			"Bash(pnpm run seed)",
+			"Bash(pnpm build)",
+			"Bash(pnpm install:*)",
+			"Bash(pnpm exec convex dev --once)",
+			"Bash(pnpm exec tsr generate)",
+			"Bash(git status:*)",
+			"Bash(git diff:*)",
+			"Bash(git log:*)"
+		]
+	}
+}
