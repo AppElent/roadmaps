@@ -211,10 +211,18 @@ Two pieces — a committed hook, and a secret you set in the web environment UI.
   }
   ```
 
-- [ ] **1.3 Set the secret in the web environment** (a UI step, not code): in the
-      Claude Code web environment settings for this repo, add `NODE_AUTH_TOKEN` = a GitHub
-      PAT with **`read:packages`** only. (A `GITHUB_TOKEN` exists in web containers but
-      isn't guaranteed to carry package scope; a dedicated read-only PAT is safer.)
+- [ ] **1.3 Add `NODE_AUTH_TOKEN` to the cloud environment** (a UI step, not code). At
+      claude.ai/code, click the **cloud icon** (current environment name) → the environment
+      selector → **Add environment** or hover an existing one and click the gear icon. In
+      the **Environment variables** field add one `.env`-style line, no quotes:
+      `NODE_AUTH_TOKEN=<PAT>`. The PAT must be scoped to **`read:packages` only**.
+      Network access: leave on the default **Trusted** — `npm.pkg.github.com` is in the
+      default allowlist, so the private install works without a custom domain list.
+      > ⚠️ **No dedicated secrets store exists yet.** The environment-variables field is
+      > visible to anyone who can edit that environment — it is *not* an encrypted vault.
+      > A `read:packages`-only PAT keeps the blast radius to "can download our `@appelent`
+      > packages." Never put higher-value creds (Convex deploy key, Cloudflare token, prod
+      > Clerk secret) in this field; rotate the PAT if the environment's editors change.
 
 - [ ] **1.4 Acceptance:** start a **web** session (or `/clear` in one) and confirm
       `node_modules` exists and `pnpm test` + `pnpm run check` + `pnpm run typecheck` run.
