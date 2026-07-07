@@ -24,3 +24,7 @@ jobs:
       - run: pnpm run check
       - run: pnpm run typecheck
       - run: pnpm test
+      # Build catches bundling/plugin/SSR-compile breakage that typecheck + tests
+      # miss. preview.yml only builds on pull_request, so without this a build-only
+      # failure could land green on a direct push to master.
+      - run: pnpm build

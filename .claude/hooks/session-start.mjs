@@ -10,8 +10,11 @@ import { join } from "node:path";
 //     Local: your user-level ~/.npmrc already has it; this no-ops.
 const npmrc = join(homedir(), ".npmrc");
 const token = process.env.NODE_AUTH_TOKEN;
+// Look for the actual auth-token line, not just the registry host — a ~/.npmrc
+// that only maps the @appelent scope (no _authToken) must still get the token.
 const hasAuth =
-	existsSync(npmrc) && readFileSync(npmrc, "utf8").includes("npm.pkg.github.com");
+	existsSync(npmrc) &&
+	readFileSync(npmrc, "utf8").includes("//npm.pkg.github.com/:_authToken=");
 if (token && !hasAuth) {
 	appendFileSync(npmrc, `\n//npm.pkg.github.com/:_authToken=${token}\n`);
 }
