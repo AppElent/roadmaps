@@ -63,6 +63,8 @@ Two layers in one repo:
 - **Theming:** light/dark via CSS variables in `src/styles.css`; `__root.tsx`'s `THEME_INIT_SCRIPT` sets `.light`/`.dark` on `<html>` before paint. Roadmap-specific tokens are `--rm-*`; shared classes `rm-btn-primary` / `rm-panel` / `rm-label`.
 - **Convex schema** (from `.cursorrules`): use the `v` validator builder; `_id`/`_creationTime` are automatic system fields (don't declare or index them). Add new shadcn components via `pnpm dlx shadcn@latest add <name>`.
 - **`@appelent/auth`** (shared Clerk/Convex auth glue, private GitHub Packages scope `@appelent`) is a direct dependency — `.npmrc` maps the scope to the registry; the auth token itself lives only in the user-level `~/.npmrc` (never commit it) or, in CI, is written per-job from the `NODE_AUTH_TOKEN`/`GITHUB_TOKEN` secret.
+- **Package manager tie-breaker:** historical specs/plans may say `npm`/`npx` — always use `pnpm` regardless. If a plan contradicts this CLAUDE.md, CLAUDE.md wins.
+- **Doc output convention:** all generated docs go under `docs/` — review notes (from the `review-app`/`review-session` skills) in `docs/review-notes/`, plans in `docs/plans/`, specs in `docs/superpowers/`. No top-level scratch folders.
 
 ## Environment
 
