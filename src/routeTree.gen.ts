@@ -20,6 +20,7 @@ import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as ShareTokenRouteImport } from './routes/share/$token'
 import { Route as RoadmapsIdRouteImport } from './routes/roadmaps/$id'
 import { Route as DiagramsIdRouteImport } from './routes/diagrams/$id'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ShareDiagramTokenRouteImport } from './routes/share/diagram.$token'
 
 const SignUpRoute = SignUpRouteImport.update({
@@ -77,6 +78,11 @@ const DiagramsIdRoute = DiagramsIdRouteImport.update({
   path: '/diagrams/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShareDiagramTokenRoute = ShareDiagramTokenRouteImport.update({
   id: '/share/diagram/$token',
   path: '/share/diagram/$token',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/api/chat': typeof ApiChatRoute
   '/diagrams/$id': typeof DiagramsIdRoute
   '/roadmaps/$id': typeof RoadmapsIdRoute
   '/share/$token': typeof ShareTokenRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/api/chat': typeof ApiChatRoute
   '/diagrams/$id': typeof DiagramsIdRoute
   '/roadmaps/$id': typeof RoadmapsIdRoute
   '/share/$token': typeof ShareTokenRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/api/chat': typeof ApiChatRoute
   '/diagrams/$id': typeof DiagramsIdRoute
   '/roadmaps/$id': typeof RoadmapsIdRoute
   '/share/$token': typeof ShareTokenRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/sign-in'
     | '/sign-up'
+    | '/api/chat'
     | '/diagrams/$id'
     | '/roadmaps/$id'
     | '/share/$token'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/sign-in'
     | '/sign-up'
+    | '/api/chat'
     | '/diagrams/$id'
     | '/roadmaps/$id'
     | '/share/$token'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/sign-in'
     | '/sign-up'
+    | '/api/chat'
     | '/diagrams/$id'
     | '/roadmaps/$id'
     | '/share/$token'
@@ -176,6 +188,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  ApiChatRoute: typeof ApiChatRoute
   DiagramsIdRoute: typeof DiagramsIdRoute
   RoadmapsIdRoute: typeof RoadmapsIdRoute
   ShareTokenRoute: typeof ShareTokenRoute
@@ -265,6 +278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiagramsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/share/diagram/$token': {
       id: '/share/diagram/$token'
       path: '/share/diagram/$token'
@@ -280,6 +300,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  ApiChatRoute: ApiChatRoute,
   DiagramsIdRoute: DiagramsIdRoute,
   RoadmapsIdRoute: RoadmapsIdRoute,
   ShareTokenRoute: ShareTokenRoute,
