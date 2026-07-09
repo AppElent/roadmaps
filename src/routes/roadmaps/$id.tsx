@@ -2,8 +2,10 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { createFileRoute } from "@tanstack/react-router";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { ChatPanel } from "@/components/ai/ChatPanel";
 import { FieldManager } from "@/components/fields/FieldManager";
 import { FilterBar } from "@/components/filters/FilterBar";
 import { ImportExportDialog } from "@/components/io/ImportExportDialog";
@@ -58,6 +60,7 @@ function RoadmapEditor() {
 	const [shareOpen, setShareOpen] = useState(false);
 	const [ioOpen, setIoOpen] = useState(false);
 	const [versionsOpen, setVersionsOpen] = useState(false);
+	const [aiOpen, setAiOpen] = useState(false);
 	const [filter, setFilter] = useState<ItemFilter>({
 		search: "",
 		laneId: "all",
@@ -162,6 +165,14 @@ function RoadmapEditor() {
 						</button>
 						<button
 							type="button"
+							className={toolbarBtn}
+							onClick={() => setAiOpen((v) => !v)}
+							aria-label={aiOpen ? "Close AI assistant" : "Open AI assistant"}
+						>
+							<Sparkles size={16} />
+						</button>
+						<button
+							type="button"
 							onClick={() => setNewItem({})}
 							className="rm-btn-primary"
 						>
@@ -253,6 +264,12 @@ function RoadmapEditor() {
 						setNewItem(null);
 					}}
 				/>
+			) : null}
+
+			{aiOpen ? (
+				<div className="fixed inset-y-0 right-0 z-40 flex w-[min(420px,100vw)] flex-col border-l border-neutral-200 bg-white shadow-xl">
+					<ChatPanel docRef={{ kind: "roadmap", id: roadmapId }} />
+				</div>
 			) : null}
 
 			<LaneManager
