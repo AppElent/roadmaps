@@ -1,0 +1,6 @@
+# Local server-side secrets for `pnpm dev` (workerd via @cloudflare/vite-plugin).
+# Copy to .dev.vars and fill in. NEVER commit .dev.vars.
+# Production: pnpm exec wrangler secret put ANTHROPIC_API_KEY   (add --env dev for archstudio-dev)
+ANTHROPIC_API_KEY=sk-ant-REPLACE_ME
+# Optional override; defaults to claude-sonnet-5 in code.
+# ANTHROPIC_MODEL=claude-sonnet-5
