@@ -3,7 +3,6 @@ import type { Id } from "@convex/_generated/dataModel";
 import { toolDefinition } from "@tanstack/ai";
 import type { ConvexHttpClient } from "convex/browser";
 import { z } from "zod";
-import type { TimelineBundle } from "@/components/timeline/TimelineView";
 import { parseDiagramDoc, validateRoadmapDoc } from "@/lib/aiDoc";
 import { parseImport, serializeRoadmap } from "@/lib/roadmapIO";
 
@@ -23,11 +22,7 @@ export async function readDocument(
 		const bundle = await convex.query(api.roadmaps.getBundle, {
 			roadmapId: docRef.id as Id<"roadmaps">,
 		});
-		return JSON.stringify(
-			serializeRoadmap(bundle as unknown as TimelineBundle),
-			null,
-			2,
-		);
+		return JSON.stringify(serializeRoadmap(bundle), null, 2);
 	}
 	const diagram = await convex.query(api.diagrams.get, {
 		diagramId: docRef.id as Id<"diagrams">,
