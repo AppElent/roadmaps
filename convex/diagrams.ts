@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { saveDiagramVersion } from "./diagramVersions";
 import { requireDiagramOwner, requireUser } from "./lib/auth";
 import { diagramTypeValidator } from "./schema";
 
@@ -105,5 +106,20 @@ export const regenerateShare = mutation({
 		const token = crypto.randomUUID().replace(/-/g, "");
 		await ctx.db.patch(args.diagramId, { shareToken: token });
 		return token;
+	},
+});
+
+/** Whole-document replace used by the AI chat: checkpoint first, then patch. */
+export const replace = mutation({
+	args: {
+		diagramId: v.id("diagrams"),
+		title: v.string(),
+		type: diagramTypeValidator,
+		source: v.string(),
+	},
+	handler: async (ctx, { diagramId, ...doc }) => {
+		const { diagram } = await requireDiagramOwner(ctx, diagramId);
+		await saveDiagramVersion(ctx, diagram, "Before AI edit", "auto");
+		await ctx.db.patch(diagramId, doc);
 	},
 });

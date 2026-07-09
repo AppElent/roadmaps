@@ -6,7 +6,7 @@ import { requireDiagramOwner } from "./lib/auth";
 export const MAX_DIAGRAM_VERSIONS = 25;
 
 /** Snapshots the diagram into a diagramVersions row, then prunes to the cap (oldest first). */
-async function saveDiagramVersion(
+export async function saveDiagramVersion(
 	ctx: MutationCtx,
 	diagram: Doc<"diagrams">,
 	label: string,

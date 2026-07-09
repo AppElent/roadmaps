@@ -208,3 +208,49 @@ test("remove deletes the diagram's versions too", async () => {
 	});
 	expect(orphans).toHaveLength(0);
 });
+
+test("replace saves an auto version, then applies the new document", async () => {
+	const t = convexTest(schema, modules);
+	const asUser = t.withIdentity(alex);
+	const diagramId = await asUser.mutation(api.diagrams.create, {
+		title: "Old title",
+		type: "mermaid",
+		source: "flowchart TD\n  A --> B",
+	});
+
+	await asUser.mutation(api.diagrams.replace, {
+		diagramId,
+		title: "New title",
+		type: "mermaid",
+		source: "flowchart TD\n  A --> C",
+	});
+
+	const diagram = await asUser.query(api.diagrams.get, { diagramId });
+	expect(diagram.title).toBe("New title");
+	expect(diagram.source).toContain("A --> C");
+
+	const versions = await asUser.query(api.diagramVersions.list, {
+		diagramId,
+	});
+	expect(versions).toHaveLength(1);
+	expect(versions[0].label).toBe("Before AI edit");
+	expect(versions[0].kind).toBe("auto");
+});
+
+test("replace rejects a non-owner", async () => {
+	const t = convexTest(schema, modules);
+	const asOwner = t.withIdentity(alex);
+	const asOther = t.withIdentity(mallory);
+	const diagramId = await asOwner.mutation(api.diagrams.create, {
+		title: "T",
+		type: "mermaid",
+	});
+	await expect(
+		asOther.mutation(api.diagrams.replace, {
+			diagramId,
+			title: "X",
+			type: "mermaid",
+			source: "",
+		}),
+	).rejects.toThrow(/not found or access denied/i);
+});
