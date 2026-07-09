@@ -68,6 +68,6 @@ Two layers in one repo:
 
 ## Environment
 
-`VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CONVEX_URL`, `CONVEX_DEPLOYMENT` live in `.env.local` (gitignored). `CLERK_JWT_ISSUER_DOMAIN` is set on the **Convex** deployment (`pnpm exec convex env set`; a preview-deployment default is also set via `pnpm exec convex env default set ... --type preview`), not in the repo. Deployed env vars go in `wrangler.jsonc`.
+`VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CONVEX_URL`, `CONVEX_DEPLOYMENT` live in `.env.local` (gitignored). `CLERK_JWT_ISSUER_DOMAIN` is set on the **Convex** deployment (`pnpm exec convex env set`; a preview-deployment default is also set via `pnpm exec convex env default set ... --type preview`), not in the repo. Deployed env vars go in `wrangler.jsonc`. `ANTHROPIC_API_KEY` (AI chat) is server-side only — `.dev.vars` locally (gitignored; see `.dev.vars.example`), `pnpm exec wrangler secret put ANTHROPIC_API_KEY` in production (add `--env dev` for `archstudio-dev`) — never in `wrangler.jsonc`.
 
 Deploy target is **Cloudflare Workers**; the wrangler app name is `archstudio` (`archstudio-dev` for the `env.dev` config, `archstudio-pr-<N>` for PR previews — see `.github/workflows/preview.yml`). Package manager is **pnpm**, pinned via `packageManager` in `package.json`.
