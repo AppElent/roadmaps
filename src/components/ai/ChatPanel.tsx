@@ -52,8 +52,15 @@ export function ChatPanel({ docRef }: { docRef: DocRef }) {
 		[getToken, docRef],
 	);
 
+	// Scope the ChatClient per document. useChat reads `connection` only once at
+	// mount (its client is memoized on a constant clientId), so if this same
+	// React instance survives a `docRef` prop change — e.g. Router navigating
+	// /roadmaps/A → /roadmaps/B without remounting — the chat would keep talking
+	// to the original document. A doc-scoped `id` forces a fresh client (and
+	// resets chat history) whenever the document changes.
 	const { messages, sendMessage, isLoading, error, stop } = useChat({
 		connection,
+		id: `${docRef.kind}:${docRef.id}`,
 	});
 
 	const submit = () => {

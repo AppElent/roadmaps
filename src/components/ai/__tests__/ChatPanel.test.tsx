@@ -62,6 +62,29 @@ describe("ChatPanel", () => {
 		expect(screen.getByText(/Updated document/)).toBeDefined();
 	});
 
+	it("renders a failed tool-call chip", () => {
+		useChatMock.mockReturnValue({
+			...baseChat,
+			messages: [
+				{
+					id: "m1",
+					role: "assistant",
+					parts: [
+						{
+							type: "tool-call",
+							id: "t1",
+							name: "write_document",
+							arguments: "{}",
+							state: "error",
+						},
+					],
+				},
+			],
+		});
+		render(<ChatPanel docRef={{ kind: "roadmap", id: "rm1" }} />);
+		expect(screen.getByText(/Failed to update document/)).toBeDefined();
+	});
+
 	it("disables input and shows Stop while streaming", () => {
 		useChatMock.mockReturnValue({ ...baseChat, isLoading: true });
 		render(<ChatPanel docRef={{ kind: "diagram", id: "dg1" }} />);
