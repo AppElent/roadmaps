@@ -2,9 +2,15 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
-import { ArrowLeft, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import {
+	ArrowLeft,
+	PanelLeftClose,
+	PanelLeftOpen,
+	Sparkles,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { ChatPanel } from "@/components/ai/ChatPanel";
 import { CodeEditorPanel } from "@/components/diagrams/CodeEditorPanel";
 import { DiagramPreview } from "@/components/diagrams/DiagramPreview";
 import { DiagramShareDialog } from "@/components/diagrams/DiagramShareDialog";
@@ -39,6 +45,7 @@ function DiagramEditor() {
 	);
 	const [versionsOpen, setVersionsOpen] = useState(false);
 	const [shareOpen, setShareOpen] = useState(false);
+	const [aiOpen, setAiOpen] = useState(false);
 
 	// Adopt remote source when there are no unsaved local edits (covers the
 	// initial load, restores, and edits arriving from another tab).
@@ -127,6 +134,14 @@ function DiagramEditor() {
 					<button
 						type="button"
 						className={toolbarBtn}
+						onClick={() => setAiOpen((v) => !v)}
+						aria-label={aiOpen ? "Close AI assistant" : "Open AI assistant"}
+					>
+						<Sparkles size={16} />
+					</button>
+					<button
+						type="button"
+						className={toolbarBtn}
 						onClick={() => setCodeOpen((v) => !v)}
 						aria-label={codeOpen ? "Collapse code panel" : "Expand code panel"}
 					>
@@ -151,6 +166,11 @@ function DiagramEditor() {
 					<div className="min-h-0 min-w-0 flex-1">
 						<DiagramPreview type={diagram.type} source={source} />
 					</div>
+					{aiOpen ? (
+						<div className="h-[45%] border-t border-neutral-200 md:h-auto md:w-[320px] md:shrink-0 md:border-t-0 md:border-l">
+							<ChatPanel docRef={{ kind: "diagram", id: diagramId }} />
+						</div>
+					) : null}
 				</div>
 			</div>
 
