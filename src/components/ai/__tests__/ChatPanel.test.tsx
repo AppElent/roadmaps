@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const useChatMock = vi.fn();
@@ -101,5 +101,23 @@ describe("ChatPanel", () => {
 		});
 		render(<ChatPanel docRef={{ kind: "diagram", id: "dg1" }} />);
 		expect(screen.getByText(/boom/)).toBeDefined();
+	});
+
+	it("renders a close button only when onClose is provided", () => {
+		useChatMock.mockReturnValue({ ...baseChat });
+		const onClose = vi.fn();
+		const { unmount } = render(
+			<ChatPanel docRef={{ kind: "roadmap", id: "rm1" }} onClose={onClose} />,
+		);
+		fireEvent.click(
+			screen.getByRole("button", { name: /close ai assistant/i }),
+		);
+		expect(onClose).toHaveBeenCalledTimes(1);
+		unmount();
+
+		render(<ChatPanel docRef={{ kind: "roadmap", id: "rm1" }} />);
+		expect(
+			screen.queryByRole("button", { name: /close ai assistant/i }),
+		).toBeNull();
 	});
 });

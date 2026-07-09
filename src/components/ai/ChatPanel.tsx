@@ -1,6 +1,6 @@
 import { useAuth } from "@clerk/clerk-react";
 import { fetchServerSentEvents, useChat } from "@tanstack/ai-react";
-import { BookOpen, PencilLine, Send, Sparkles, Square } from "lucide-react";
+import { BookOpen, PencilLine, Send, Sparkles, Square, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import type { DocRef } from "@/lib/ai/tools";
 import { cn } from "@/lib/utils";
@@ -36,7 +36,13 @@ function ToolChip({ name, state }: { name: string; state: string }) {
 	);
 }
 
-export function ChatPanel({ docRef }: { docRef: DocRef }) {
+export function ChatPanel({
+	docRef,
+	onClose,
+}: {
+	docRef: DocRef;
+	onClose?: () => void;
+}) {
 	const { getToken } = useAuth();
 	const [input, setInput] = useState("");
 	const bottomRef = useRef<HTMLDivElement>(null);
@@ -78,6 +84,16 @@ export function ChatPanel({ docRef }: { docRef: DocRef }) {
 			<div className="flex items-center gap-2 border-b border-neutral-200 px-3 py-2 text-sm font-medium">
 				<Sparkles size={14} className="text-neutral-500" />
 				AI assistant
+				{onClose ? (
+					<button
+						type="button"
+						onClick={onClose}
+						aria-label="Close AI assistant"
+						className="ml-auto rounded-md border border-neutral-200 p-1 text-neutral-500 hover:bg-neutral-100"
+					>
+						<X size={14} />
+					</button>
+				) : null}
 			</div>
 
 			<div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">

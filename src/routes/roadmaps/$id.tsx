@@ -268,7 +268,10 @@ function RoadmapEditor() {
 
 			{aiOpen ? (
 				<div className="fixed inset-y-0 right-0 z-40 flex w-[min(420px,100vw)] flex-col border-l border-neutral-200 bg-white shadow-xl">
-					<ChatPanel docRef={{ kind: "roadmap", id: roadmapId }} />
+					<ChatPanel
+						docRef={{ kind: "roadmap", id: roadmapId }}
+						onClose={() => setAiOpen(false)}
+					/>
 				</div>
 			) : null}
 

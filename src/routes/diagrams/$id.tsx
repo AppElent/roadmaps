@@ -168,7 +168,10 @@ function DiagramEditor() {
 					</div>
 					{aiOpen ? (
 						<div className="h-[45%] border-t border-neutral-200 md:h-auto md:w-[320px] md:shrink-0 md:border-t-0 md:border-l">
-							<ChatPanel docRef={{ kind: "diagram", id: diagramId }} />
+							<ChatPanel
+								docRef={{ kind: "diagram", id: diagramId }}
+								onClose={() => setAiOpen(false)}
+							/>
 						</div>
 					) : null}
 				</div>
