@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "capabilities": {
+    "auth": {
+      "owner": "package",
+      "package": "@appelent/auth",
+      "status": "active"
+    },
+    "cli": {
+      "owner": "capability-skill",
+      "skill": "add-cli",
+      "package": "@appelent/cli",
+      "status": "candidate"
+    },
+    "i18n": {
+      "owner": "capability-skill",
+      "skill": "add-i18n",
+      "package": null,
+      "status": "candidate"
+    }
+  }
+}

@@ -65,9 +65,32 @@ Two layers in one repo:
 - **`@appelent/auth`** (shared Clerk/Convex auth glue, private GitHub Packages scope `@appelent`) is a direct dependency — `.npmrc` maps the scope to the registry; the auth token itself lives only in the user-level `~/.npmrc` (never commit it) or, in CI, is written per-job from the `NODE_AUTH_TOKEN`/`GITHUB_TOKEN` secret.
 - **Package manager tie-breaker:** historical specs/plans may say `npm`/`npx` — always use `pnpm` regardless. If a plan contradicts this CLAUDE.md, CLAUDE.md wins.
 - **Doc output convention:** all generated docs go under `docs/` — review notes (from the `review-app`/`review-session` skills) in `docs/review-notes/`, plans in `docs/plans/`, specs in `docs/superpowers/`. No top-level scratch folders.
+- **`.claude/skills/review-app`, `.claude/skills/review-session`, `.claude/commands/upgrade-deps.md`, and `.claude/commands/review-session.md` are project-local copies** of the global `~/.claude/skills/custom-review-app` / `custom-review-session` and `~/.claude/commands/custom-upgrade-deps.md` / `custom-review-session.md` templates (renamed to avoid the duplicate-skill collision with the global copies). **The global copies are the source of truth** — port any non-project-specific fix made locally (not a route/module fact) back to the global file so future bootstrapped projects inherit it; the two should only ever differ by name/frontmatter. `.claude/skills/verify/SKILL.md` is the one exception: it's project-specific by design (route→module map) and has no global counterpart.
 
 ## Environment
 
 `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CONVEX_URL`, `CONVEX_DEPLOYMENT` live in `.env.local` (gitignored). `CLERK_JWT_ISSUER_DOMAIN` is set on the **Convex** deployment (`pnpm exec convex env set`; a preview-deployment default is also set via `pnpm exec convex env default set ... --type preview`), not in the repo. Deployed env vars go in `wrangler.jsonc`. `ANTHROPIC_API_KEY` (AI chat) is server-side only — `.dev.vars` locally (gitignored; see `.dev.vars.example`), `pnpm exec wrangler secret put ANTHROPIC_API_KEY` in production (add `--env dev` for `archstudio-dev`) — never in `wrangler.jsonc`.
 
 Deploy target is **Cloudflare Workers**; the wrangler app name is `archstudio` (`archstudio-dev` for the `env.dev` config, `archstudio-pr-<N>` for PR previews — see `.github/workflows/preview.yml`). Package manager is **pnpm**, pinned via `packageManager` in `package.json`.
+
+<!-- appelent-managed:start -->
+## Appelent Managed Project
+
+This repo follows the shared Appelent project baseline.
+
+Source of truth:
+- `C:\Users\ericj\.claude\appelent\projects.json`
+- `C:\Users\ericj\.claude\appelent\capabilities.json`
+- `C:\Users\ericj\.claude\skills`
+
+Web/browser fallback:
+- `.claude\appelent`
+- `.claude\skills`
+
+Before adding functionality that could apply to multiple apps, check whether it belongs in:
+- an existing or new `@appelent/*` package
+- `custom-bootstrap`
+- a capability skill such as `add-cli` or `add-i18n`
+
+If you add, remove, or generalize cross-app functionality, update the Appelent registry files or explain why no registry change is needed.
+<!-- appelent-managed:end -->

@@ -4,7 +4,6 @@ description: Start a live review session — I browse/test the app in the previe
 ---
 
 # Review Session
-
 ## Your role this session
 
 I'm going to start the app and browse it myself in the in-app preview browser. I'll test pages, click around, and talk out loud as I go. **Your job is to listen and take notes — not to act.**

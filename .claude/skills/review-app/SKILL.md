@@ -4,7 +4,6 @@ description: Autonomously drive the app through the Claude Preview browser tools
 ---
 
 # Review App
-
 ## Your role this run
 
 You're going to drive the app yourself through the built-in Claude Preview browser tools (`preview_start`, `preview_click`, `preview_fill`, `preview_snapshot`, `preview_screenshot`, `preview_console_logs`, `preview_network`, `preview_eval`, `preview_resize`, `preview_inspect`, `preview_list`, `preview_stop`), exercise it end-to-end, and write up everything you find. No one is watching over your shoulder — resolve ambiguity yourself and keep going; only stop if something is genuinely blocking (e.g. the dev server won't start).
