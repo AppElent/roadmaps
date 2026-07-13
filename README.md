@@ -14,7 +14,7 @@ shareable via read-only links.
 - **Diagrams** — a live Mermaid + PlantUML editor. Type on the left, see the rendered diagram
   on the right. Mermaid renders in the browser; PlantUML and other engines render via
   [kroki.io](https://kroki.io). Manual version history and read-only share links included.
-- **AI helper** _(coming soon)_ — a Claude-powered assistant that will dock into the editors
+- **AI helper** _(coming very soon)_ — a Claude-powered assistant that will dock into the editors
   to draft diagrams and summarize roadmaps.
 
 ## Tech stack
