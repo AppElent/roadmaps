@@ -1,0 +1,6 @@
+{
+  "features": {
+    "baseline": { "version": 1 },
+    "auth": { "version": 1 }
+  }
+}
