@@ -1,6 +1,6 @@
 {
   "features": {
-    "baseline": { "version": 4, "steps": [14] },
+    "baseline": { "version": 4, "steps": [14, 15] },
     "auth": { "version": 1 }
   }
 }
